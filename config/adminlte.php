@@ -1,0 +1,262 @@
+<?php
+
+return [
+
+    'title' => 'CiCoSyS',
+    'title_prefix' => '',
+    'title_postfix' => '',
+
+    'use_ico_only' => false,
+    'use_full_favicon' => false,
+
+    'google_fonts' => [
+        'allowed' => true,
+    ],
+
+    /*
+    |------------------------------------------------------------------
+    | Branding
+    |------------------------------------------------------------------
+    */
+    'logo' => '<span style="color:#20e3b2;font-weight:600">CiCo</span><span style="color:#ffffff;font-weight:300">SyS</span>',
+    'logo_img' => 'vendor/adminlte/dist/img/logo2.png',
+    'logo_img_class' => 'brand-image img-circle elevation-3',
+    'logo_img_alt' => 'CiCoSyS',
+
+    'auth_logo' => [
+        'enabled' => true,
+        'img' => [
+            'path' => 'vendor/adminlte/dist/img/logo2.png',
+            'alt' => 'CiCoSyS',
+            'class' => 'img-circle elevation-3',
+            'width' => 70,
+            'height' => 70,
+        ],
+    ],
+
+    /*
+    |------------------------------------------------------------------
+    | Preloader
+    |------------------------------------------------------------------
+    */
+    'preloader' => [
+        'enabled' => true,
+        'mode' => 'fullscreen',
+        'img' => [
+            'path' => 'vendor/adminlte/dist/img/logo2.png',
+            'alt' => 'Cargando CiCoSyS...',
+            'effect' => 'animation__pulse',
+            'width' => 80,
+            'height' => 80,
+        ],
+    ],
+
+    /*
+    |------------------------------------------------------------------
+    | User Menu
+    |------------------------------------------------------------------
+    */
+    'usermenu_enabled' => true,
+    'usermenu_header' => true,
+    'usermenu_header_class' => 'bg-info',
+    'usermenu_image' => false,
+    'usermenu_desc' => false,
+    'usermenu_profile_url' => false,
+
+    /*
+    |------------------------------------------------------------------
+    | Layout
+    |------------------------------------------------------------------
+    */
+    'layout_topnav' => null,
+    'layout_boxed' => null,
+    'layout_fixed_sidebar' => true,
+    'layout_fixed_navbar' => true,
+    'layout_fixed_footer' => null,
+    'layout_light_mode' => null,
+
+    /*
+    |------------------------------------------------------------------
+    | Auth Views
+    |------------------------------------------------------------------
+    */
+    'classes_auth_card' => 'card-outline card-info shadow',
+    'classes_auth_btn' => 'btn-flat btn-info',
+
+    /*
+    |------------------------------------------------------------------
+    | Admin Panel Classes
+    |------------------------------------------------------------------
+    */
+    'classes_body' => 'text-sm',
+    'classes_sidebar' => 'sidebar-dark-info elevation-4',
+    'classes_topnav' => 'navbar-light shadow-sm',
+    'classes_topnav_nav' => 'navbar-expand',
+    'classes_topnav_container' => 'container-fluid',
+
+    /*
+    |------------------------------------------------------------------
+    | Sidebar
+    |------------------------------------------------------------------
+    */
+    'sidebar_mini' => 'lg',
+    'sidebar_collapse' => false,
+    'sidebar_scrollbar_theme' => 'os-theme-dark',
+    'sidebar_scrollbar_auto_hide' => 'l',
+    'sidebar_nav_accordion' => true,
+    'sidebar_nav_animation_speed' => 200,
+
+    /*
+    |------------------------------------------------------------------
+    | URLs
+    |------------------------------------------------------------------
+    */
+    'use_route_url' => false,
+    'dashboard_url' => 'home',
+    'logout_url' => 'logout',
+    'login_url' => 'login',
+    'register_url' => 'register',
+    'profile_url' => 'admin/profile',
+
+    /*
+    |------------------------------------------------------------------
+    | Menu
+    |------------------------------------------------------------------
+    */
+    'menu' => [
+
+        ['type' => 'fullscreen-widget', 'topnav_right' => true],
+
+        ['header' => 'ADMINISTRACIÓN'],
+        ['text' => 'Dashboard', 'url' => 'home', 'icon' => 'fas fa-chart-line'],
+
+        [
+            'text' => 'Usuarios',
+            'icon' => 'fas fa-users-cog',
+            'submenu' => [
+                ['text' => 'Roles', 'url' => 'admin/roles', 'icon' => 'fas fa-user-shield'],
+                ['text' => 'Usuarios', 'url' => 'admin/users', 'icon' => 'fas fa-users'],
+            ],
+        ],
+
+        ['header' => 'NEGOCIO'],
+        ['text' => 'Categorías', 'url' => 'admin/categories', 'icon' => 'fas fa-layer-group'],
+        ['text' => 'Posts', 'url' => 'admin/posts', 'icon' => 'fas fas fa-newspaper'],
+        ['text' => 'Paginas', 'url' => 'admin/pages', 'icon' => 'fas fas fa-file-alt'],
+        ['text' => 'Productos', 'url' => 'admin/products', 'icon' => 'fas fa-boxes'],
+        ['text' => 'Clientes', 'url' => 'admin/clients', 'icon' => 'fas fa-user-tie'],
+        ['text' => 'Garantes', 'url' => 'admin/guarantors', 'icon' => 'fas fa-user-shield'],
+
+        ['header' => 'FINANZAS'],
+        ['text' => 'Préstamos', 'url' => 'admin/loans', 'icon' => 'fas fa-hand-holding-usd'],
+        ['text' => 'Pagos', 'url' => 'admin/loan-payments', 'icon' => 'fas fa-cash-register'],
+
+        ['header' => 'CUENTA'],
+        ['text' => 'Perfil', 'url' => 'admin/settings', 'icon' => 'fas fa-user'],
+        ['text' => 'Cerrar sesión', 'url' => 'logout', 'icon' => 'fas fa-sign-out-alt'],
+    ],
+
+    /*
+    |------------------------------------------------------------------
+    | Menu Filters
+    |------------------------------------------------------------------
+    */
+    'filters' => [
+        JeroenNoten\LaravelAdminLte\Menu\Filters\GateFilter::class,
+        JeroenNoten\LaravelAdminLte\Menu\Filters\HrefFilter::class,
+        JeroenNoten\LaravelAdminLte\Menu\Filters\ActiveFilter::class,
+        JeroenNoten\LaravelAdminLte\Menu\Filters\ClassesFilter::class,
+        JeroenNoten\LaravelAdminLte\Menu\Filters\LangFilter::class,
+    ],
+
+    /*
+    |------------------------------------------------------------------
+    | Plugins
+    |------------------------------------------------------------------
+    */
+
+    'plugins' => [
+        'Datatables' => [
+            'active' => false,
+            'files' => [
+                [
+                    'type' => 'js',
+                    'asset' => false,
+                    'location' => '//cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js',
+                ],
+                [
+                    'type' => 'js',
+                    'asset' => false,
+                    'location' => '//cdn.datatables.net/1.10.19/js/dataTables.bootstrap4.min.js',
+                ],
+                [
+                    'type' => 'css',
+                    'asset' => false,
+                    'location' => '//cdn.datatables.net/1.10.19/css/dataTables.bootstrap4.min.css',
+                ],
+            ],
+        ],
+        'Select2' => [
+            'active' => false,
+            'files' => [
+                [
+                    'type' => 'js',
+                    'asset' => false,
+                    'location' => '//cdnjs.cloudflare.com/ajax/libs/select2/4.0.3/js/select2.min.js',
+                ],
+                [
+                    'type' => 'css',
+                    'asset' => false,
+                    'location' => '//cdnjs.cloudflare.com/ajax/libs/select2/4.0.3/css/select2.css',
+                ],
+            ],
+        ],
+        'Chartjs' => [
+            'active' => false,
+            'files' => [
+                [
+                    'type' => 'js',
+                    'asset' => false,
+                    'location' => '//cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.0/Chart.bundle.min.js',
+                ],
+            ],
+        ],
+        'Sweetalert2' => [
+            'active' => false,
+            'files' => [
+                [
+                    'type' => 'js',
+                    'asset' => false,
+                    'location' => '//cdn.jsdelivr.net/npm/sweetalert2@8',
+                ],
+            ],
+        ],
+        'Pace' => [
+            'active' => false,
+            'files' => [
+                [
+                    'type' => 'css',
+                    'asset' => false,
+                    'location' => '//cdnjs.cloudflare.com/ajax/libs/pace/1.0.2/themes/blue/pace-theme-center-radar.min.css',
+                ],
+                [
+                    'type' => 'js',
+                    'asset' => false,
+                    'location' => '//cdnjs.cloudflare.com/ajax/libs/pace/1.0.2/pace.min.js',
+                ],
+            ],
+        ],
+    ],
+
+
+    /*
+    |------------------------------------------------------------------
+    | Custom CSS
+    |------------------------------------------------------------------
+    */
+    'custom_css' => [
+        'css/cicosys-theme.css',
+    ],
+
+    'livewire' => false,
+];

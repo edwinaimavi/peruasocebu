@@ -1,0 +1,164 @@
+/* =========================================================
+   CiCo Ingenieros – LIGHT THEME
+   ========================================================= */
+
+/* -------------------------------
+   GENERAL
+-------------------------------- */
+body {
+    background-color: #f5f7fb;
+    color: #1f2937;
+}
+
+/* -------------------------------
+   SIDEBAR
+-------------------------------- */
+.main-sidebar {
+    background-color: #ffffff !important;
+    border-right: 1px solid #e5e7eb;
+}
+
+/* Brand */
+.brand-link {
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.brand-text {
+    color: #3b0a6b !important;
+    font-weight: 600;
+}
+
+/* Sidebar links */
+.nav-sidebar .nav-link {
+    color: #374151 !important;
+    font-weight: 500;
+    border-radius: 6px;
+    margin: 2px 6px;
+}
+
+/* Active item */
+.nav-sidebar .nav-link.active {
+    background-color: #3b0a6b !important;
+    color: #ffffff !important;
+}
+
+/* Hover */
+.nav-sidebar .nav-link:hover {
+    background-color: rgba(32, 227, 178, 0.18) !important;
+    color: #065f46 !important;
+}
+
+/* Icons */
+.nav-sidebar .nav-icon {
+    color: #3b0a6b !important;
+}
+
+/* -------------------------------
+   NAVBAR
+-------------------------------- */
+.navbar {
+    background-color: #ffffff !important;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.navbar .nav-link {
+    color: #3b0a6b !important;
+    font-weight: 500;
+}
+
+.navbar .nav-link:hover {
+    color: #20e3b2 !important;
+}
+
+/* -------------------------------
+   CONTENT
+-------------------------------- */
+.content-wrapper {
+    background-color: #f5f7fb;
+}
+
+/* -------------------------------
+   CARDS
+-------------------------------- */
+.card {
+    border-radius: 12px;
+    border: none;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.06);
+}
+
+.card-header {
+    background-color: #ffffff;
+    border-bottom: 1px solid #e5e7eb;
+    font-weight: 600;
+    color: #3b0a6b;
+}
+
+.card-primary.card-outline {
+    border-top: 4px solid #20e3b2 !important;
+}
+
+/* -------------------------------
+   BUTTONS
+-------------------------------- */
+.btn-primary {
+    background-color: #3b0a6b !important;
+    border-color: #3b0a6b !important;
+    font-weight: 500;
+}
+
+.btn-primary:hover {
+    background-color: #20e3b2 !important;
+    border-color: #20e3b2 !important;
+    color: #065f46 !important;
+}
+
+/* -------------------------------
+   TABLES
+-------------------------------- */
+.table thead th {
+    background-color: #f9fafb;
+    color: #3b0a6b;
+    font-weight: 600;
+    border-bottom: 2px solid #e5e7eb;
+}
+
+.table tbody tr:hover {
+    background-color: rgba(32, 227, 178, 0.08);
+}
+
+/* -------------------------------
+   FORMS
+-------------------------------- */
+.form-control:focus {
+    border-color: #20e3b2;
+    box-shadow: 0 0 0 0.15rem rgba(32, 227, 178, 0.25);
+}
+
+/* -------------------------------
+   LOGIN / AUTH
+-------------------------------- */
+.login-page,
+.register-page {
+    background: linear-gradient(135deg, #3b0a6b, #20e3b2);
+}
+
+.login-card-body,
+.register-card-body {
+    border-radius: 14px;
+}
+
+/* -------------------------------
+   SCROLLBAR
+-------------------------------- */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: #3b0a6b;
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background-color: #20e3b2;
+}
