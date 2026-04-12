@@ -1,6 +1,7 @@
+id="previewContainer" class="row"></div>
 <!-- Modal elegante para Product -->
-<div class="modal fade" id="productModal" tabindex="-1" role="dialog"
-    aria-labelledby="productModalLabel" aria-hidden="true">
+<div class="modal fade" id="productModal" tabindex="-1" role="dialog" aria-labelledby="productModalLabel"
+    aria-hidden="true">
 
     <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
         <div class="modal-content shadow-lg border-0 rounded-lg overflow-hidden">
@@ -27,194 +28,151 @@
 
             <!-- BODY -->
             <div class="modal-body p-3" style="background:#f8fbfc;">
-                <form id="productForm" autocomplete="off" enctype="multipart/form-data" class="row">
+                <form id="productForm" enctype="multipart/form-data">
+
                     @csrf
 
-                    <!-- LEFT -->
-                    <div class="col-lg-4 mb-3">
-                        <div class="card border-0 rounded-lg shadow-sm h-100">
-                            <div class="card-body">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body">
 
-                                <small class="text-muted d-block mb-1">Vista previa</small>
+                            <!-- FILA PRINCIPAL -->
+                            <div class="row">
 
-                                <img id="productPreviewSide"
-                                    src="https://static.vecteezy.com/system/resources/previews/005/951/722/non_2x/preview-interface-icon-illustration-vector.jpg"
-                                    class="img-fluid rounded shadow-sm mb-3"
-                                    style="object-fit:cover;width:100%;">
+                                <!-- LEFT (FORMULARIO) -->
+                                <div class="col-lg-8">
 
-                                <div class="text-center mt-2" id="productMetaInfo" style="display:none;">
-                                    <small class="text-muted d-block">
-                                        <i class="far fa-clock mr-1"></i>
-                                        <span id="productCreatedAt">—</span>
-                                    </small>
-                                </div>
-
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- RIGHT -->
-                    <div class="col-lg-8">
-                        <div class="card border-0 rounded-lg shadow-sm">
-                            <div class="card-body">
-
-                                <!-- Nombre + slug -->
-                                <div class="form-row">
-                                    <div class="form-group col-md-8">
-                                        <label class="small font-weight-bold text-secondary">
-                                            NOMBRE <span class="text-danger">*</span>
-                                        </label>
-                                        <input type="text" name="name" id="name"
-                                            class="form-control form-control-sm"
-                                            placeholder="Ej: Sistema de Ventas POS">
-                                        <span class="invalid-feedback" id="name-error"></span>
-                                    </div>
-
-                                    <div class="form-group col-md-4">
-                                        <label class="small font-weight-bold text-secondary">
-                                            SLUG <span class="text-danger">*</span>
-                                        </label>
-                                        <input type="text" name="slug" id="slug"
-                                            class="form-control form-control-sm"
-                                            placeholder="sistema-ventas-pos" readonly>
-                                        <span class="invalid-feedback" id="slug-error"></span>
-                                    </div>
-                                </div>
-
-                                <!-- Categoría + Tipo -->
-                                <div class="form-row">
-
-                                    <div class="form-group col-md-6">
-                                        <label class="small font-weight-bold text-secondary">
-                                            CATEGORÍA
-                                        </label>
-                                        <select name="category_id" id="category_id"
-                                            class="form-control form-control-sm">
-                                            <option value="">Seleccione una categoría</option>
-                                            @foreach ($categories as $category)
-                                                @if ($category->status)
-                                                    <option value="{{ $category->id }}">
-                                                        {{ $category->name }}
-                                                    </option>
-                                                @endif
-                                            @endforeach
-                                        </select>
-                                        <span class="invalid-feedback" id="category_id-error"></span>
-                                    </div>
-
-                                    <div class="form-group col-md-6">
-                                        <label class="small font-weight-bold text-secondary">
-                                            TIPO <span class="text-danger">*</span>
-                                        </label>
-                                        <select name="type" id="type"
-                                            class="form-control form-control-sm">
-                                            <option value="">Seleccione</option>
-                                            <option value="sistema">Sistema</option>
-                                            <option value="servicio">Servicio</option>
-                                        </select>
-                                        <span class="invalid-feedback" id="type-error"></span>
-                                    </div>
-
-                                </div>
-
-                                <!-- Precio + Estado -->
-                                <div class="form-row">
-
-                                    <div class="form-group col-md-6">
-                                        <label class="small font-weight-bold text-secondary">
-                                            PRECIO (S/)
-                                        </label>
-                                        <input type="number" step="0.01" name="price" id="price"
-                                            class="form-control form-control-sm"
-                                            placeholder="0.00">
-                                        <span class="invalid-feedback" id="price-error"></span>
-                                    </div>
-
-                                    <div class="form-group col-md-6">
-                                        <label class="small font-weight-bold text-secondary d-block">
-                                            ESTADO
-                                        </label>
-                                        <div class="custom-control custom-switch mt-2">
-                                            <input type="checkbox"
-                                                class="custom-control-input"
-                                                id="status"
-                                                name="status"
-                                                value="published">
-                                            <label class="custom-control-label" for="status">
-                                                Publicado
+                                    <!-- Nombre + slug -->
+                                    <div class="form-row">
+                                        <div class="form-group col-md-8">
+                                            <label class="small font-weight-bold text-secondary">
+                                                NOMBRE *
                                             </label>
+                                            <input type="text" name="name" id="name"
+                                                class="form-control form-control-sm">
+                                        </div>
+
+                                        <div class="form-group col-md-4">
+                                            <label class="small font-weight-bold text-secondary">
+                                                SLUG *
+                                            </label>
+                                            <input type="text" name="slug" id="slug"
+                                                class="form-control form-control-sm" readonly>
+                                        </div>
+                                    </div>
+
+                                    <!-- Categoría + Tipo -->
+                                    <div class="form-row">
+                                        <div class="form-group col-md-6">
+                                            <label class="small">CATEGORÍA</label>
+                                            <select name="category_id" id="category_id"
+                                                class="form-control form-control-sm">
+                                                <option value="">Seleccione</option>
+                                                @foreach ($categories as $category)
+                                                    @if ($category->status)
+                                                        <option value="{{ $category->id }}">
+                                                            {{ $category->name }}
+                                                        </option>
+                                                    @endif
+                                                @endforeach
+                                            </select>
+                                        </div>
+
+                                        <div class="form-group col-md-6">
+                                            <label class="small">TIPO *</label>
+                                            <select name="type" id="type" class="form-control form-control-sm">
+                                                <option value="">Seleccione</option>
+                                                <option value="sistema">Sistema</option>
+                                                <option value="servicio">Servicio</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <!-- Precio + Estado -->
+                                    <div class="form-row">
+                                        <div class="form-group col-md-6">
+                                            <label class="small">PRECIO</label>
+                                            <input type="number" name="price" id="price"
+                                                class="form-control form-control-sm">
+                                        </div>
+
+                                        <div class="form-group col-md-6">
+                                            <label class="small d-block">ESTADO</label>
+                                            <div class="custom-control custom-switch">
+                                                <input type="checkbox" class="custom-control-input" id="status"
+                                                    name="status" value="published">
+                                                <label class="custom-control-label" for="status">
+                                                    Publicado
+                                                </label>
+                                            </div>
                                         </div>
                                     </div>
 
                                 </div>
 
-                                <!-- Imagen -->
-                               <!-- GALERÍA DE IMÁGENES -->
-<div class="border rounded-lg p-3 bg-white shadow-sm">
+                                <!-- RIGHT (GALERÍA) -->
+                                <div class="col-lg-4">
 
-    <label class="small font-weight-bold text-secondary d-block mb-2">
-        GALERÍA DE IMÁGENES
-    </label>
+                                    <div class="gallery-card">
 
-    <input type="file"
-        name="images[]"
-        id="images"
-        multiple
-        accept="image/*"
-        class="form-control form-control-sm mb-3">
+                                        <!-- HEADER -->
+                                        <div class="gallery-header">
+                                            <span>Galería</span>
+                                            <small>Sube múltiples imágenes</small>
+                                        </div>
 
-    <!-- PREVIEW GRID -->
-    <div id="previewContainer" class="row"></div>
+                                        <!-- INPUT -->
+                                        <label class="upload-box">
+                                            <input type="file" id="images" multiple accept="image/*" hidden>
 
-</div>
+                                            <div class="upload-content">
+                                                <i class="fas fa-cloud-upload-alt"></i>
+                                                <span>Haz clic o arrastra imágenes</span>
+                                            </div>
+                                        </label>
+
+                                        <!-- GRID -->
+                                        <div id="previewContainer" class="gallery-grid"></div>
+
+                                        <!-- EMPTY STATE -->
+                                        <div id="emptyGallery" class="empty-gallery">
+                                            <i class="far fa-images"></i>
+                                            <p>No hay imágenes aún</p>
+                                        </div>
+
+                                    </div>
+
+                                </div>
 
                             </div>
+
                         </div>
                     </div>
 
-                    <!-- DESCRIPCIONES -->
-                    <div class="col-lg-12 mt-3">
-                        <div class="card border-0 rounded-lg shadow-sm">
-                            <div class="card-body">
+                    <!-- DESCRIPCIÓN -->
+                    <div class="card border-0 shadow-sm mt-3">
+                        <div class="card-body">
 
-                                <div class="form-group">
-                                    <label class="small font-weight-bold text-secondary">
-                                        DESCRIPCIÓN CORTA
-                                    </label>
-                                    <input type="text" name="short_description"
-                                        id="short_description"
-                                        class="form-control form-control-sm"
-                                        placeholder="Resumen breve del producto">
-                                </div>
-
-                                <div class="form-group">
-                                    <label class="small font-weight-bold text-secondary">
-                                        DESCRIPCIÓN <span class="text-danger">*</span>
-                                    </label>
-                                    <textarea name="description" id="description"
-                                        rows="5"
-                                        class="form-control form-control-sm"
-                                        placeholder="Describe el producto o servicio..."></textarea>
-                                    <span class="invalid-feedback" id="description-error"></span>
-                                </div>
-
-                                <div class="form-row mt-4">
-                                    <div class="col-12 d-flex justify-content-end">
-                                        <button type="button"
-                                            class="btn btn-light border mr-2"
-                                            data-dismiss="modal">
-                                            <i class="fas fa-times mr-1"></i> Cancelar
-                                        </button>
-
-                                        <button type="submit"
-                                            id="btnSaveProduct"
-                                            class="btn btn-primary">
-                                            <i class="fas fa-save mr-1"></i> Guardar Producto
-                                        </button>
-                                    </div>
-                                </div>
-
+                            <div class="form-group">
+                                <label class="small">DESCRIPCIÓN CORTA</label>
+                                <input type="text" name="short_description" id="short_description"
+                                    class="form-control form-control-sm">
                             </div>
+
+                            <div class="form-group">
+                                <label class="small">DESCRIPCIÓN *</label>
+                                <textarea name="description" id="description" class="form-control form-control-sm"></textarea>
+                            </div>
+
+                            <div class="text-right">
+                                <button type="button" class="btn btn-light" data-dismiss="modal">
+                                    Cancelar
+                                </button>
+
+                                <button type="submit" class="btn btn-primary">
+                                    Guardar Producto
+                                </button>
+                            </div>
+
                         </div>
                     </div>
 

@@ -99,7 +99,7 @@ document.addEventListener('DOMContentLoaded', function () {
             // LIMPIAR
             // ============================
             previewContainer.innerHTML = '';
-            selectedFiles = [];
+            /* selectedFiles = []; */
             window.imagesToDelete = [];
 
             // ============================
@@ -109,25 +109,15 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 res.images.forEach(img => {
 
-                    const col = document.createElement('div');
-                    col.classList.add('col-md-3', 'mb-2');
+                    const item = document.createElement('div');
+                    item.classList.add('gallery-item');
 
-                    col.innerHTML = `
-                <div class="position-relative">
-                    <img src="${img.url}"
-                         class="img-fluid rounded shadow-sm"
-                         style="height:120px; object-fit:cover; width:100%;">
+                    item.innerHTML = `
+    <img src="${img.url}">
+    <button class="delete-btn" data-id="${img.id}">&times;</button>
+`;
 
-                    <button type="button"
-                        class="btn btn-danger btn-sm position-absolute btn-remove-existing"
-                        data-id="${img.id}"
-                        style="top:5px; right:5px;">
-                        ✕
-                    </button>
-                </div>
-                `;
-
-                    previewContainer.appendChild(col);
+                    previewContainer.appendChild(item);
                 });
             }
 
@@ -168,7 +158,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
 
         // 👉 agregar imágenes manualmente
-        selectedFiles.forEach((file, index) => {
+        newImages.forEach(file => {
             formData.append('images[]', file);
         });
         // 🔥 enviar imágenes eliminadas
@@ -216,6 +206,8 @@ document.addEventListener('DOMContentLoaded', function () {
             },
 
             error: function (xhr) {
+                console.log(xhr.responseJSON); // 👈 AGREGA ESTO
+
                 unlock('productSave');
                 divLoading && (divLoading.style.display = 'none');
 
@@ -267,9 +259,13 @@ document.addEventListener('DOMContentLoaded', function () {
         $('#btnSaveProduct')
             .prop('disabled', false)
             .html('<i class="fas fa-save mr-1"></i> Guardar Producto');
+        $('#previewContainer').html('');
+        newImages = [];
+        deletedImages = [];
 
-        previewContainer.innerHTML = '';
-        selectedFiles = [];
+        $('#previewContainer').html('');
+        newImages = [];
+        deletedImages = [];
     });
 
     // ============================
@@ -424,64 +420,73 @@ document.addEventListener('DOMContentLoaded', function () {
     // ============================
     // PREVIEW MULTIPLE IMAGES
     // ============================
-    const imagesInput = document.getElementById('images');
-    const previewContainer = document.getElementById('previewContainer');
-
-    let selectedFiles = [];
-
-    if (imagesInput) {
-        imagesInput.addEventListener('change', function () {
-
-            const files = Array.from(this.files);
-
-            files.forEach(file => {
-
-                if (!file.type.startsWith('image/')) return;
-
-                selectedFiles.push(file);
-
-                const reader = new FileReader();
-
-                reader.onload = function (e) {
-
-                    const col = document.createElement('div');
-                    col.classList.add('col-md-3', 'mb-2');
-                    col.innerHTML = `
-<div class="position-relative">
-    <img src="${e.target.result}"
-         class="img-fluid rounded shadow-sm"
-         style="height:120px; object-fit:cover; width:100%;">
-
-    <button type="button"
-        class="btn btn-danger btn-sm position-absolute btn-remove-image"
-        style="top:5px; right:5px;">
-        ✕
-    </button>
-</div>
-`;
-
-
-                    previewContainer.appendChild(col);
-                };
-
-                reader.readAsDataURL(file);
-            });
-
-        });
-    }
-
+    /*    const imagesInput = document.getElementById('images');
+       const previewContainer = document.getElementById('previewContainer');
+   
+       let selectedFiles = [];
+   
+       if (imagesInput) {
+           imagesInput.addEventListener('change', function () {
+   
+               const files = Array.from(this.files);
+   
+               files.forEach(file => {
+   
+                   if (!file.type.startsWith('image/')) return;
+   
+                   selectedFiles.push(file);
+   
+                   const reader = new FileReader();
+   
+                   reader.onload = function (e) {
+   
+                       const col = document.createElement('div');
+                       col.classList.add('col-md-3', 'mb-2');
+                       col.innerHTML = `
+   <div class="position-relative">
+       <img src="${e.target.result}"
+            class="img-fluid rounded shadow-sm"
+            style="height:120px; object-fit:cover; width:100%;">
+   
+       <button type="button"
+           class="btn btn-danger btn-sm position-absolute btn-remove-image"
+           style="top:5px; right:5px;">
+           ✕
+       </button>
+   </div>
+   `;
+   
+   
+                       previewContainer.appendChild(col);
+                   };
+   
+                   reader.readAsDataURL(file);
+               });
+   
+           });
+       }
+    */
 });
 
 
 
 
-$(document).on('click', '.btn-remove-image', function () {
+$(document).on('click', '.delete-btn', function () {
 
-    const index = $(this).closest('.col-md-3').index();
+    const id = $(this).data('id');
 
-    selectedFiles.splice(index, 1); // 🔥 elimina del array
+    // 🔥 SI ES IMAGEN EXISTENTE (BD)
+    if (id) {
+        window.imagesToDelete.push(id);
+    } else {
+        // 🔥 SI ES IMAGEN NUEVA
+        const index = $(this).closest('.gallery-item').index();
+        newImages.splice(index, 1);
+    }
 
-    $(this).closest('.col-md-3').remove();
+    $(this).closest('.gallery-item').remove();
+
+    toggleEmpty();
 });
 
 // 🔥 CAMBIAR IMAGEN PRINCIPAL
@@ -491,12 +496,62 @@ $(document).on('click', '.thumb-img', function () {
 });
 
 // 🔥 eliminar imagen existente (BD)
-$(document).on('click', '.btn-remove-existing', function () {
+/* $(document).on('click', '.btn-remove-existing', function () {
 
     const id = $(this).data('id');
 
     // guardar para eliminar en backend
     window.imagesToDelete.push(id);
 
-    $(this).closest('.col-md-3').remove();
+    $(this).closest('.gallery-item').remove();
+}); */
+
+
+//para el modal 
+
+
+let newImages = [];
+let deletedImages = [];
+
+$('#images').on('change', function (e) {
+    let files = e.target.files;
+
+    for (let file of files) {
+
+        // evitar duplicados
+        if (newImages.some(f => f.name === file.name)) continue;
+
+        newImages.push(file);
+
+        let reader = new FileReader();
+
+        reader.onload = function (e) {
+
+            $('#previewContainer').append(`
+                <div class="gallery-item">
+                    <img src="${e.target.result}">
+                    <button class="delete-btn">&times;</button>
+                </div>
+            `);
+
+            toggleEmpty();
+        };
+
+        reader.readAsDataURL(file);
+    }
 });
+
+// eliminar visual
+$(document).on('click', '.delete-btn', function () {
+    $(this).closest('.gallery-item').remove();
+    toggleEmpty();
+});
+
+// mostrar / ocultar empty
+function toggleEmpty() {
+    if ($('#previewContainer').children().length > 0) {
+        $('#emptyGallery').hide();
+    } else {
+        $('#emptyGallery').show();
+    }
+}

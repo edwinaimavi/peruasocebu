@@ -75,6 +75,107 @@
         .badge-servicio {
             background-color: #6f42c1;
         }
+
+
+
+        /* CARD */
+        .gallery-card {
+            background: #fff;
+            border-radius: 12px;
+            padding: 15px;
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.05);
+        }
+
+        /* HEADER */
+        .gallery-header {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 10px;
+        }
+
+        .gallery-header span {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .gallery-header small {
+            color: #999;
+        }
+
+        /* UPLOAD BOX */
+        .upload-box {
+            border: 2px dashed #dce3ea;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all .2s ease;
+            margin-bottom: 10px;
+        }
+
+        .upload-box:hover {
+            border-color: #007bff;
+            background: #f8fbff;
+        }
+
+        .upload-content i {
+            font-size: 22px;
+            color: #007bff;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        /* GRID */
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+            gap: 10px;
+        }
+
+        /* ITEM */
+        .gallery-item {
+            position: relative;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .gallery-item img {
+            width: 100%;
+            height: 90px;
+            object-fit: cover;
+            border-radius: 10px;
+        }
+
+        /* HOVER DELETE */
+        .gallery-item .delete-btn {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: rgba(255, 0, 0, 0.85);
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            padding: 4px 6px;
+            font-size: 12px;
+            opacity: 0;
+            transition: .2s;
+        }
+
+        .gallery-item:hover .delete-btn {
+            opacity: 1;
+        }
+
+        /* EMPTY */
+        .empty-gallery {
+            text-align: center;
+            color: #aaa;
+            margin-top: 15px;
+        }
+
+        .empty-gallery i {
+            font-size: 30px;
+            margin-bottom: 5px;
+        }
     </style>
 @endpush
 
@@ -84,6 +185,9 @@
             productList: "{{ route('admin.products.list') }}",
             productView: "{{ route('admin.products.view', ':id') }}"
         }
+
+
     </script>
+
     @vite(['resources/js/pages/product.js'])
 @endpush
