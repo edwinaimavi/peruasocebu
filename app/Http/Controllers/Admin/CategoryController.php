@@ -10,7 +10,7 @@ use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
-
+use Illuminate\Support\Facades\Storage;
 
 class CategoryController extends Controller
 {
@@ -19,9 +19,12 @@ class CategoryController extends Controller
      */
     public function index()
     {
-        return view('admin.categories.index');
-    }
+        $categories = Category::with('children')
+            ->whereNull('parent_id') // 🔥 SOLO PADRES
+            ->get();
 
+        return view('admin.categories.index', compact('categories'));
+    }
 
     public function list()
     {
@@ -81,11 +84,13 @@ class CategoryController extends Controller
             ],
             'description' => 'nullable|string',
             'status' => 'nullable|boolean',
+            'parent_id' => 'nullable|exists:categories,id',
         ], [
             'name.required' => 'El nombre es obligatorio.',
             'slug.required' => 'El slug es obligatorio.',
             'slug.unique' => 'Este slug ya está en uso.',
         ]);
+
 
         $data['status'] = $request->has('status') ? 1 : 0;
 
@@ -93,6 +98,19 @@ class CategoryController extends Controller
             DB::beginTransaction();
 
             $category = Category::create($data);
+
+
+            if ($request->hasFile('image')) {
+
+                $file = $request->file('image');
+
+                $path = $file->store('categories', 'public');
+
+                $category->images()->create([
+                    'image' => $path,
+                    'order' => 1
+                ]);
+            }
 
             DB::commit();
 
@@ -144,6 +162,7 @@ class CategoryController extends Controller
             ],
             'description' => 'nullable|string',
             'status' => 'nullable|boolean',
+            'parent_id' => 'nullable|exists:categories,id',
         ], [
             'name.required' => 'El nombre es obligatorio.',
             'slug.required' => 'El slug es obligatorio.',
@@ -156,6 +175,35 @@ class CategoryController extends Controller
             DB::beginTransaction();
 
             $category->update($data);
+            // 🔥 eliminar imagen si el usuario la quitó
+            if ($request->remove_image) {
+
+                foreach ($category->images as $img) {
+
+                    // 🔥 borrar archivo físico
+                    Storage::disk('public')->delete($img->image);
+
+                    // 🔥 borrar registro
+                    $img->delete();
+                }
+            }
+
+            if ($request->hasFile('image')) {
+
+                // opcional: borrar anterior
+                foreach ($category->images as $img) {
+                    Storage::disk('public')->delete($img->image);
+                    $img->delete();
+                }
+
+                $file = $request->file('image');
+                $path = $file->store('categories', 'public');
+
+                $category->images()->create([
+                    'image' => $path,
+                    'order' => 1
+                ]);
+            }
 
             DB::commit();
 
@@ -176,42 +224,30 @@ class CategoryController extends Controller
     }
 
 
-   public function destroy(string $id)
-{
-    try {
-        $category = Category::findOrFail($id);
+    public function destroy(string $id)
+    {
+        try {
+            $category = Category::findOrFail($id);
 
-        // (Opcional) Si luego tienes relaciones, aquí puedes validar:
-        // if ($category->products()->exists()) {
-        //     return response()->json([
-        //         'status'  => 'error',
-        //         'message' => 'No se puede eliminar la categoría porque tiene productos asociados.'
-        //     ], 422);
-        // }
+            foreach ($category->images as $img) {
+                Storage::disk('public')->delete($img->image);
+                $img->delete();
+            }
 
-        $category->delete();
+            $category->delete();
 
-        return response()->json([
-            'status'  => 'success',
-            'message' => 'Categoría eliminada correctamente.'
-        ], 200);
+            return response()->json([
+                'status'  => 'success',
+                'message' => 'Categoría eliminada correctamente.'
+            ], 200);
+        } catch (\Throwable $e) {
 
-    } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            Log::error('Error eliminando categoría: ' . $e->getMessage());
 
-        return response()->json([
-            'status'  => 'error',
-            'message' => 'La categoría no existe o ya fue eliminada.'
-        ], 404);
-
-    } catch (\Throwable $e) {
-
-        Log::error('Error eliminando categoría: ' . $e->getMessage());
-
-        return response()->json([
-            'status'  => 'error',
-            'message' => 'Ocurrió un error al eliminar la categoría.'
-        ], 500);
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Ocurrió un error al eliminar la categoría.'
+            ], 500);
+        }
     }
-}
-
 }

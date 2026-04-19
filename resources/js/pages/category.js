@@ -1,5 +1,8 @@
+import Cropper from 'cropperjs';
+import 'cropperjs/dist/cropper.css';
 var divLoading = document.getElementById('divLoading');
 let tableCategory;
+let removeImageFlag = false;
 
 // ============================
 // LOCK ANTI DOBLE CLICK
@@ -91,31 +94,76 @@ document.addEventListener("DOMContentLoaded", function () {
 
         const $btn = $(this);
 
-        $('#categoryForm').attr('data-id', $btn.data('id'));
+        const previewImg = document.getElementById('previewImg');
+        const imagePreview = document.getElementById('imagePreview');
+        const uploadPlaceholder = document.getElementById('uploadPlaceholder');
+        const uploadBox = document.getElementById('uploadBox');
+        const imageInput = document.getElementById('image');
 
+        // 🔥 RESET TOTAL PRIMERO (IMPORTANTE)
+        previewImg.src = '';
+        imagePreview.classList.add('d-none');
+        uploadPlaceholder.style.display = 'block';
+        uploadBox.classList.remove('disabled');
+        imageInput.value = '';
+        removeImageFlag = false;
+
+        // 🔥 SET DATA
+        $('#categoryForm').attr('data-id', $btn.data('id'));
         $('#name').val($btn.data('name'));
         $('#slug').val($btn.data('slug'));
         $('#description').val($btn.data('description'));
         $('#status').prop('checked', $btn.data('status') == 1);
+        $('#categoryForm select[name="parent_id"]').val($btn.data('parent'));
 
-        // limpiar errores
-        $('#categoryForm .is-invalid').removeClass('is-invalid');
-        $('#categoryForm .invalid-feedback').text('');
+        const image = $btn.data('image');
 
-        $('#categoryModalLabel').text('Editar Categoría');
+        // 🔥 AHORA SI APLICA IMAGEN
+        if (image && image !== 'null' && image !== '') {
+
+            previewImg.src = '/storage/' + image;
+
+            imagePreview.classList.remove('d-none');
+            uploadPlaceholder.style.display = 'none';
+
+            uploadBox.classList.add('no-upload');
+        }
+
         $('#categoryModal').modal('show');
     });
+
 
     $('#categoryModal').on('show.bs.modal', function () {
         const $form = $('#categoryForm');
 
+        const previewImg = document.getElementById('previewImg');
+        const imagePreview = document.getElementById('imagePreview');
+        const uploadPlaceholder = document.getElementById('uploadPlaceholder');
+        const uploadBox = document.getElementById('uploadBox');
+        const imageInput = document.getElementById('image');
+
         if (!$form.attr('data-id')) {
+
+            // 🔥 RESET FORM
             $form[0].reset();
+
+            // 🔥 LIMPIAR ERRORES
             $form.find('.is-invalid').removeClass('is-invalid');
             $form.find('.invalid-feedback').text('');
 
+            // 🔥 ESTADO
             $('#status').prop('checked', true);
             $('#categoryModalLabel').text('Nueva Categoría');
+
+            // 🔥 RESET IMAGEN COMPLETO
+            previewImg.src = '';
+            imagePreview.classList.add('d-none');
+            uploadPlaceholder.style.display = 'block';
+            uploadBox.classList.remove('disabled');
+            imageInput.value = '';
+
+            // 🔥 RESET FLAG
+            removeImageFlag = false;
         }
     });
 
@@ -134,7 +182,10 @@ document.addEventListener("DOMContentLoaded", function () {
         const id = $form.attr('data-id');
 
         let url, method;
-        const formData = $form.serialize();
+        let formData = new FormData(this);
+        if (removeImageFlag) {
+            formData.append('remove_image', 1);
+        }
 
         if (id) {
             url = `/admin/categories/${id}`;
@@ -144,13 +195,16 @@ document.addEventListener("DOMContentLoaded", function () {
             method = 'POST';
         }
 
-        let dataToSend = formData;
-        if (id) dataToSend = formData + '&_method=PUT';
+        if (id) {
+            formData.append('_method', 'PUT');
+        }
 
         $.ajax({
             url: url,
             type: method,
-            data: dataToSend,
+            data: formData,
+            processData: false, // 🔥 IMPORTANTE
+            contentType: false, // 🔥 IMPORTANTE
             success: function (response) {
                 divLoading && (divLoading.style.display = 'none');
                 unlock('categorySave');
@@ -262,5 +316,161 @@ document.addEventListener("DOMContentLoaded", function () {
             });
         });
     });
+
+
+    let cropper;
+    const imageInput = document.getElementById('image');
+    const imageToCrop = document.getElementById('imageToCrop');
+
+    imageInput.addEventListener('change', function (e) {
+
+        let file = e.target.files[0];
+
+        if (!file) return;
+
+        let reader = new FileReader();
+
+        reader.onload = function (event) {
+
+            imageToCrop.src = event.target.result;
+
+            $('#cropModal').modal('show');
+
+            $('#cropModal').one('shown.bs.modal', function () {
+
+                if (cropper) cropper.destroy();
+
+                cropper = new Cropper(imageToCrop, {
+                    aspectRatio: 500 / 400,
+                    viewMode: 1,
+                    dragMode: 'move',
+
+                    cropBoxMovable: false,
+                    cropBoxResizable: false,
+
+                    movable: true,
+                    zoomable: true,
+                    scalable: false,
+                    rotatable: false,
+
+                    autoCropArea: 1,
+                    background: false,
+
+                    ready() {
+                        let containerData = cropper.getContainerData();
+                        let imageData = cropper.getImageData();
+
+                        let scaleX = containerData.width / imageData.naturalWidth;
+                        let scaleY = containerData.height / imageData.naturalHeight;
+
+                        let scale = Math.max(scaleX, scaleY);
+
+                        cropper.zoomTo(scale);
+                    }
+                });
+
+            });
+        };
+
+        reader.readAsDataURL(file);
+
+
+
+    });
+
+    document.getElementById('cropImageBtn').addEventListener('click', function () {
+
+        let canvas = cropper.getCroppedCanvas({
+            width: 500,
+            height: 400
+        });
+
+        let croppedImage = canvas.toDataURL('image/jpeg');
+
+        // Mostrar preview
+        const previewImg = document.getElementById('previewImg');
+        const imagePreview = document.getElementById('imagePreview');
+        const uploadPlaceholder = document.getElementById('uploadPlaceholder');
+
+        // Mostrar imagen
+        previewImg.src = croppedImage;
+
+        // Mostrar preview y ocultar placeholder
+        imagePreview.classList.remove('d-none');
+        uploadPlaceholder.style.display = 'none';
+
+        // 👉 Convertir a archivo para enviar al backend
+        canvas.toBlob(function (blob) {
+            let file = new File([blob], "category.jpg", { type: "image/jpeg" });
+
+            let dataTransfer = new DataTransfer();
+            dataTransfer.items.add(file);
+
+            imageInput.files = dataTransfer.files;
+        });
+
+        $('#cropModal').modal('hide');
+
+    });
+
+    // CLICK EN EL BOX → ABRE INPUT FILE
+    document.getElementById('uploadBox').addEventListener('click', function () {
+
+        if (this.classList.contains('disabled')) return; // 🔥
+
+        document.getElementById('image').click();
+    });
+
+
+    //eliminar imagen 
+    document.getElementById('removeImage').addEventListener('click', function () {
+
+        const previewImg = document.getElementById('previewImg');
+        const imagePreview = document.getElementById('imagePreview');
+        const uploadPlaceholder = document.getElementById('uploadPlaceholder');
+        const uploadBox = document.getElementById('uploadBox');
+        const imageInput = document.getElementById('image');
+
+        previewImg.src = '';
+        imagePreview.classList.add('d-none');
+        uploadPlaceholder.style.display = 'block';
+        uploadBox.classList.remove('disabled');
+
+        imageInput.value = '';
+
+        // 🔥 IMPORTANTE
+        removeImageFlag = true;
+    });
+    const uploadBox = document.getElementById('uploadBox');
+
+    uploadBox.addEventListener('dragover', function (e) {
+        e.preventDefault();
+        uploadBox.classList.add('dragging');
+    });
+
+    uploadBox.addEventListener('dragleave', function () {
+        uploadBox.classList.remove('dragging');
+    });
+
+    uploadBox.addEventListener('drop', function (e) {
+        e.preventDefault();
+        uploadBox.classList.remove('dragging');
+
+        let files = e.dataTransfer.files;
+
+        if (files.length > 0) {
+            imageInput.files = files;
+
+            // 🔥 DISPARAR EVENTO CHANGE MANUAL
+            imageInput.dispatchEvent(new Event('change'));
+        }
+    });
+
+
+
+
+
+
+
 
 });

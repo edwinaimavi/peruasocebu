@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\PostController;
 use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\RoleController;
+use App\Http\Controllers\StoreController;
 use Illuminate\Support\Facades\Route;
 
 
@@ -55,3 +56,6 @@ Route::get('products/list', [ProductController::class, 'list'])->name('products.
 Route::get('/admin/products/{product}/view', [ProductController::class, 'showView'])
     ->name('products.view');
 Route::resource('products', ProductController::class)->except(['create', 'show']);
+
+
+

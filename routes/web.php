@@ -1,13 +1,15 @@
 <?php
 
+use App\Http\Controllers\CartController;
+use App\Http\Controllers\StoreController;
 use App\Livewire\Settings\Appearance;
 use App\Livewire\Settings\Password;
 use App\Livewire\Settings\Profile;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
-    return view('welcome');
-})->name('home');
+    return view('store.home');
+});
 
 Route::view('dashboard', 'dashboard')
     ->middleware(['auth', 'verified'])
@@ -21,8 +23,12 @@ Route::middleware(['auth'])->group(function () {
     Route::get('settings/appearance', Appearance::class)->name('settings.appearance');
 });
 
-require __DIR__.'/auth.php';
+require __DIR__ . '/auth.php';
 
 Auth::routes();
 
 Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
+Route::get('/', [StoreController::class, 'index']);
+/* Route::get('/test-store', [StoreController::class, 'index']); */
+Route::get('/product/{slug}', [StoreController::class, 'show'])->name('store.product');
+Route::post('/cart/add', [CartController::class, 'add'])->name('cart.add');

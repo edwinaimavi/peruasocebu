@@ -17,6 +17,7 @@ class Category extends Model
         'slug',
         'description',
         'status',
+        'parent_id' // 🔥 ESTE
     ];
 
     protected $casts = [
@@ -31,5 +32,27 @@ class Category extends Model
     public function product()
     {
         return $this->hasMany(Product::class);
+    }
+
+    public function images()
+    {
+        return $this->morphMany(Image::class, 'imageable');
+    }
+
+    // 🔥 RELACIÓN PADRE
+    public function parent()
+    {
+        return $this->belongsTo(Category::class, 'parent_id');
+    }
+
+    // 🔥 RELACIÓN HIJOS
+    public function children()
+    {
+        return $this->hasMany(Category::class, 'parent_id');
+    }
+
+    public function childrenRecursive()
+    {
+        return $this->children()->with('childrenRecursive');
     }
 }

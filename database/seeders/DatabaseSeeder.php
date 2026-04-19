@@ -28,10 +28,10 @@ class DatabaseSeeder extends Seeder
         User::factory(3)->create();
 
         $this->call([
-            CategorySeeder::class,
+           /*  CategorySeeder::class, */
             PostSeeder::class,
             PageSeeder::class,
-            ProductSeeder::class,
+            /* ProductSeeder::class, */
 
             /* PersonSeeder::class,
             ClientSeeder::class,

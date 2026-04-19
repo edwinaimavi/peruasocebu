@@ -96,6 +96,8 @@
 
 
 
+
+
     {{--     <script src="{{ asset('vendor/select2/js/select2.full.min.js') }}"></script> --}}
 
     <script>
@@ -142,14 +144,20 @@
 
 @push('css')
     {{-- DataTables Bootstrap 4 (CSS) --}}
+
     <link href="https://cdn.datatables.net/1.13.8/css/dataTables.bootstrap4.min.css" rel="stylesheet">
     <link href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.bootstrap4.min.css" rel="stylesheet">
     <link rel="stylesheet" href="{{ asset('vendor/datatables/css/dataTables.bootstrap4.css') }}">
     <link rel="stylesheet" href="{{ asset('vendor/datatables/css/responsive.bootstrap4.css') }}">
 
+
+
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css">
     <link rel="stylesheet"
         href="https://cdn.jsdelivr.net/npm/@ttskch/select2-bootstrap4-theme@1.5.2/dist/select2-bootstrap4.min.css">
+
+
+
 
     <style type="text/css">
         #divLoading {
@@ -317,14 +325,14 @@
         }
 
         /*   .btn-secondary {
-                                background-color: #6c757d;
-                                border-color: #6c757d;
-                                } */
+                                    background-color: #6c757d;
+                                    border-color: #6c757d;
+                                    } */
 
         /*  .btn-secondary:hover {
-                                background-color: #5c636a;
-                                }
-                         */
+                                    background-color: #5c636a;
+                                    }
+                             */
         #imgPreview {
             object-fit: cover;
             border: 2px solid #e3e3e3;
@@ -592,8 +600,8 @@
         {{-- estilos heredados desde layout --}}
 
         /* =====================================================
-                       Botón Nuevo — Gris Premium / Glass / Profesional
-                       ===================================================== */
+                           Botón Nuevo — Gris Premium / Glass / Profesional
+                           ===================================================== */
         .btn-new {
             position: relative;
             border-radius: 14px;
