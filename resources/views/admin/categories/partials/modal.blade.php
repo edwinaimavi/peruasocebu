@@ -56,11 +56,11 @@
                                     </div>
 
                                     <div class="mb-3">
-                                        <label>Categoría padre</label>
-                                        <select name="parent_id" class="form-control">
-                                            <option value="">-- Categoría principal --</option>
+                                        <label class="small font-weight-bold text-secondary"">Categoría padre</label>
+                                        <select name="parent_id" class="form-control form-control-sm">
+                                            
 
-                                            <option value="">-- Categoría principal --</option>
+                                            <option value="">Categoría principal </option>
 
                                             @foreach ($categories as $category)
                                                 @include('admin.categories.partials.category-option', [
