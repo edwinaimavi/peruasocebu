@@ -29,9 +29,9 @@ class DatabaseSeeder extends Seeder
 
         $this->call([
             /*  CategorySeeder::class, */
-            PostSeeder::class,
+           /*  PostSeeder::class,
             PageSeeder::class,
-            BrandSeeder::class,
+            BrandSeeder::class, */
             /* ProductSeeder::class, */
 
             /* PersonSeeder::class,

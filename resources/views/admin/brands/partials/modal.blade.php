@@ -1,5 +1,5 @@
-<!-- Modal Categoría PRO -->
-<div class="modal fade" id="categoryModal" tabindex="-1">
+<!-- Modal Brand -->
+<div class="modal fade" id="brandModal" tabindex="-1">
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content shadow-lg border-0 rounded-lg overflow-hidden">
 
@@ -9,12 +9,12 @@
 
                 <div class="d-flex align-items-center">
                     <div class="icon-circle bg-light mr-3">
-                        <i class="fas fa-layer-group text-secondary"></i>
+                        <i class="fas fa-tags text-secondary"></i>
                     </div>
                     <div>
-                        <h5 class="modal-title mb-0">Nueva Categoría</h5>
+                        <h5 class="modal-title mb-0">Nueva Marca</h5>
                         <small class="text-muted">
-                            Organiza tus productos por categorías
+                            Gestiona las marcas de tus productos
                         </small>
                     </div>
                 </div>
@@ -26,7 +26,7 @@
 
             <!-- BODY -->
             <div class="modal-body p-3" style="background:#f8fbfc;">
-                <form id="categoryForm" enctype="multipart/form-data">
+                <form id="brandForm" enctype="multipart/form-data">
 
                     <div class="card border-0 shadow-sm">
                         <div class="card-body">
@@ -44,6 +44,7 @@
                                             </label>
                                             <input type="text" name="name" id="name"
                                                 class="form-control form-control-sm">
+                                            <div class="invalid-feedback" id="name-error"></div>
                                         </div>
 
                                         <div class="form-group col-md-4">
@@ -52,37 +53,16 @@
                                             </label>
                                             <input type="text" name="slug" id="slug"
                                                 class="form-control form-control-sm" readonly>
+                                            <div class="invalid-feedback" id="slug-error"></div>
                                         </div>
-                                    </div>
-
-                                    <div class="mb-3">
-                                        <label class="small font-weight-bold text-secondary"">Categoría padre</label>
-                                        <select name="parent_id" class="form-control form-control-sm">
-
-
-                                            <option value="">Categoría principal </option>
-
-                                            @foreach ($categories as $category)
-                                                @include('admin.categories.partials.category-option', [
-                                                    'category' => $category,
-                                                    'level' => 0,
-                                                ])
-                                            @endforeach
-                                        </select>
-                                    </div>
-
-                                    <!-- Descripción -->
-                                    <div class="form-group">
-                                        <label class="small">DESCRIPCIÓN</label>
-                                        <textarea name="description" id="description" class="form-control form-control-sm" rows="3"></textarea>
                                     </div>
 
                                     <!-- Estado -->
                                     <div class="form-group">
                                         <label class="small d-block">ESTADO</label>
                                         <div class="custom-control custom-switch">
-                                            <input type="checkbox" class="custom-control-input" id="status"
-                                                name="status" value="1" checked>
+                                            <input type="checkbox" class="custom-control-input"
+                                                id="status" name="status" value="1" checked>
                                             <label class="custom-control-label" for="status">
                                                 Activo
                                             </label>
@@ -100,7 +80,9 @@
                                         <input type="file" id="image" name="image" accept="image/*" hidden>
 
                                         <!-- DROP ZONE -->
-                                        <div id="uploadBox" class="upload-box-modern" data-width="500"
+                                        <div id="uploadBox"
+                                            class="upload-box-modern"
+                                            data-width="500"
                                             data-height="400">
 
                                             <div id="uploadPlaceholder" class="upload-placeholder">
@@ -137,7 +119,7 @@
                         </button>
 
                         <button type="submit" class="btn btn-primary">
-                            Guardar Categoría
+                            Guardar Marca
                         </button>
                     </div>
 

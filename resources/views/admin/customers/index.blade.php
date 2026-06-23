@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('subtitle', 'Usuarios')
+@section('subtitle', 'Clientes')
 
 @section('header')
     <div class="container-fluid">
@@ -8,15 +8,12 @@
 
             <div class="col-sm-6 d-flex align-items-center gap-3">
                 <h1 class="m-0 text-bold text-dark">
-                    <i class="fas fa-layer-group text-info mr-1"></i>
-                    Categorías
+                    <i class="fas fa-users text-primary mr-1"></i>
+                    Clientes
 
-
-                    {{-- @can('admin.users.store') --}}
-                    <button class="btn btn-app bg-dark btn-new" type="button" data-toggle="modal" data-target="#categoryModal">
+                    <button class="btn btn-app bg-dark btn-new" type="button" data-toggle="modal" data-target="#customerModal">
                         <i class="fas fa-plus-circle"></i> Nuevo
                     </button>
-                    {{--      @endcan --}}
                 </h1>
             </div>
 
@@ -29,7 +26,7 @@
                             </a>
                         </li>
                         <li class="breadcrumb-item active">
-                            Categorías
+                            Clientes
                         </li>
                     </ol>
                 </nav>
@@ -46,41 +43,41 @@
         <div class="card-body p-3">
 
             <div class="table-responsive">
-                <table id="tableCategory" class="table table-hover table-bordered align-middle mb-0 text-center">
+                <table id="tableCustomer" class="table table-hover table-bordered align-middle mb-0 text-center">
+
                     <thead class="bg-light text-uppercase text-secondary small">
                         <tr>
                             <th width="5%">#</th>
-                            <th width="10%">ID</th>
-                            <th>NOMBRE</th>
-                            <th>CATEGORÍA PADRE</th>
-                            <th>DESCRIPCIÓN</th>
+                            <th width="8%">ID</th>
+                            <th>NOMBRE COMPLETO</th>
+                            <th width="12%">DOCUMENTO</th>
+                            <th width="12%">N° DOC</th>
+                            <th width="12%">TELÉFONO</th>
+                            <th width="18%">EMAIL</th>
                             <th width="10%">ESTADO</th>
-                            <th width="10%">ACCIONES</th>
+                            <th width="13%">ACCIONES</th>
                         </tr>
                     </thead>
-                </table>
 
+                </table>
             </div>
 
         </div>
     </div>
 
     {{-- Modal --}}
-    @include('admin.categories.partials.modal')
+    @include('admin.customers.partials.modal')
 
 @stop
-
-@push('css')
-    
-@endpush
-
 
 
 @push('js')
     <script>
         window.routes = {
-            categoryList: "{{ route('admin.categories.list') }}", // GET lista para DataTables
+            customerList: "{{ route('admin.customers.list') }}",
+            consultarDocumento: "{{ route('admin.customers.consultar', 'DOC_PLACEHOLDER') }}"
         }
     </script>
-    @vite(['resources/js/pages/category.js'])
+
+    @vite(['resources/js/pages/customer.js'])
 @endpush

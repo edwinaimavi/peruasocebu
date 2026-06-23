@@ -141,10 +141,15 @@ return [
 
         ['header' => 'NEGOCIO'],
         ['text' => 'Categorías', 'url' => 'admin/categories', 'icon' => 'fas fa-layer-group'],
+        ['text' => 'Tipo de Precio', 'url' => 'admin/price-types', 'icon' => 'fas fa-dollar-sign'],
+        ['text' => 'Marcas', 'url' => 'admin/brands', 'icon' => 'fas fa-tags'],
+        ['text' => 'Proveedores', 'url' => 'admin/suppliers', 'icon' => 'fas fa-truck'],
+        ['text' => 'Compras', 'url' => 'admin/purchases', 'icon' => 'fas fa-file-invoice-dollar'],
+        ['text' => 'Kardex', 'url' => 'admin/stock/kardex', 'icon' => 'fas fa-boxes'],
         ['text' => 'Posts', 'url' => 'admin/posts', 'icon' => 'fas fas fa-newspaper'],
         ['text' => 'Paginas', 'url' => 'admin/pages', 'icon' => 'fas fas fa-file-alt'],
         ['text' => 'Productos', 'url' => 'admin/products', 'icon' => 'fas fa-boxes'],
-        ['text' => 'Clientes', 'url' => 'admin/clients', 'icon' => 'fas fa-user-tie'],
+        ['text' => 'Clientes', 'url' => 'admin/customers', 'icon' => 'fas fa-user-tie'],
         ['text' => 'Garantes', 'url' => 'admin/guarantors', 'icon' => 'fas fa-user-shield'],
 
         ['header' => 'FINANZAS'],

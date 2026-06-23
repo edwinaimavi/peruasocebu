@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('subtitle', 'Usuarios')
+@section('subtitle', 'Compras')
 
 @section('header')
     <div class="container-fluid">
@@ -8,15 +8,13 @@
 
             <div class="col-sm-6 d-flex align-items-center gap-3">
                 <h1 class="m-0 text-bold text-dark">
-                    <i class="fas fa-layer-group text-info mr-1"></i>
-                    Categorías
+                    <i class="fas fa-file-invoice-dollar text-success mr-1"></i>
+                    Compras
 
+                    <button class="btn btn-app bg-dark btn-new" type="button" data-toggle="modal" data-target="#purchaseModal">
 
-                    {{-- @can('admin.users.store') --}}
-                    <button class="btn btn-app bg-dark btn-new" type="button" data-toggle="modal" data-target="#categoryModal">
-                        <i class="fas fa-plus-circle"></i> Nuevo
+                        <i class="fas fa-plus-circle"></i> Nueva
                     </button>
-                    {{--      @endcan --}}
                 </h1>
             </div>
 
@@ -29,7 +27,7 @@
                             </a>
                         </li>
                         <li class="breadcrumb-item active">
-                            Categorías
+                            Compras
                         </li>
                     </ol>
                 </nav>
@@ -46,41 +44,43 @@
         <div class="card-body p-3">
 
             <div class="table-responsive">
-                <table id="tableCategory" class="table table-hover table-bordered align-middle mb-0 text-center">
+                <table id="tablePurchase" class="table table-hover table-bordered align-middle mb-0 text-center">
+
                     <thead class="bg-light text-uppercase text-secondary small">
                         <tr>
                             <th width="5%">#</th>
-                            <th width="10%">ID</th>
-                            <th>NOMBRE</th>
-                            <th>CATEGORÍA PADRE</th>
-                            <th>DESCRIPCIÓN</th>
+                            <th width="8%">ID</th>
+                            <th>PROVEEDOR</th>
+                            <th width="10%">DOCUMENTO</th>
+                            <th width="12%">N° DOC</th>
+                            <th width="10%">FECHA</th>
+                            <th width="10%">TOTAL</th>
                             <th width="10%">ESTADO</th>
-                            <th width="10%">ACCIONES</th>
+                            <th width="15%">ACCIONES</th>
                         </tr>
                     </thead>
-                </table>
 
+                </table>
             </div>
 
         </div>
     </div>
 
     {{-- Modal --}}
-    @include('admin.categories.partials.modal')
+    @include('admin.purchases.partials.modal')
+    @include('admin.purchases.partials.view-modal')
 
 @stop
-
-@push('css')
-    
-@endpush
-
 
 
 @push('js')
     <script>
         window.routes = {
-            categoryList: "{{ route('admin.categories.list') }}", // GET lista para DataTables
-        }
+            purchaseList: "{{ route('admin.purchases.list') }}"
+        };
+        // 🔥 ESTA ES LA LÍNEA QUE TE FALTA
+        window.products = @json($products);
     </script>
-    @vite(['resources/js/pages/category.js'])
+
+    @vite(['resources/js/pages/purchase.js'])
 @endpush

@@ -62,22 +62,50 @@ id="previewContainer" class="row"></div>
 
                                     <!-- Categoría + Tipo -->
                                     <div class="form-row">
-                                        <div class="form-group col-md-6">
+
+                                        <!-- CATEGORÍA -->
+                                        <div class="form-group col-md-4">
                                             <label class="small">CATEGORÍA</label>
-                                            <select name="category_id" id="category_id"
-                                                class="form-control form-control-sm">
+                                            <select name="category_id" id="category_id" class="form-control">
                                                 <option value="">Seleccione</option>
+
                                                 @foreach ($categories as $category)
-                                                    @if ($category->status)
-                                                        <option value="{{ $category->id }}">
-                                                            {{ $category->name }}
-                                                        </option>
-                                                    @endif
+                                                    @include('admin.categories.partials.category-option', [
+                                                        'category' => $category,
+                                                        'level' => 0,
+                                                    ])
                                                 @endforeach
                                             </select>
                                         </div>
 
-                                        <div class="form-group col-md-6">
+                                        <!-- MARCA 🔥 -->
+                                        <div class="form-group col-md-4">
+                                            <label class="small">MARCA</label>
+                                            <select name="brand_id" id="brand_id" class="form-control">
+                                                <option value="">Seleccione</option>
+
+                                                @foreach ($brands as $brand)
+                                                    <option value="{{ $brand->id }}">
+                                                        {{ $brand->name }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+
+                                        <div class="form-group col-md-4">
+                                            <label class="small">MODELO</label>
+                                            <input type="text" name="model" id="model"
+                                                class="form-control form-control-sm">
+                                        </div>
+
+                                        <!-- TIPO -->
+
+
+                                    </div>
+                                    <!-- Precio + Estado -->
+                                    <div class="form-row">
+
+                                        <div class="form-group col-md-4">
                                             <label class="small">TIPO *</label>
                                             <select name="type" id="type" class="form-control form-control-sm">
                                                 <option value="">Seleccione</option>
@@ -85,17 +113,45 @@ id="previewContainer" class="row"></div>
                                                 <option value="servicio">Servicio</option>
                                             </select>
                                         </div>
-                                    </div>
+                                        <!-- ========================= -->
+                                        <!-- 💰 PRECIOS DINÁMICOS -->
+                                        <!-- ========================= -->
+                                        <div class="col-md-12">
 
-                                    <!-- Precio + Estado -->
-                                    <div class="form-row">
-                                        <div class="form-group col-md-6">
-                                            <label class="small">PRECIO</label>
-                                            <input type="number" name="price" id="price"
-                                                class="form-control form-control-sm">
+                                            <div class="border rounded p-2 bg-light">
+
+                                                <label class="small font-weight-bold text-secondary mb-2 d-block">
+                                                    💰 PRECIOS POR TIPO
+                                                </label>
+
+                                                <div class="row">
+
+                                                    @foreach ($priceTypes as $type)
+                                                        <div class="form-group col-md-4">
+
+                                                            <label class="small">
+                                                                {{ $type->name }}
+                                                            </label>
+
+                                                            <input type="number" step="0.01"
+                                                                class="form-control form-control-sm price-input"
+                                                                name="prices[{{ $type->id }}]"
+                                                                data-type="{{ $type->id }}" placeholder="0.00">
+
+                                                        </div>
+                                                    @endforeach
+
+                                                </div>
+
+                                                <small class="text-muted">
+                                                    Define precios para cada tipo de cliente
+                                                </small>
+
+                                            </div>
+
                                         </div>
 
-                                        <div class="form-group col-md-6">
+                                        <div class="form-group col-md-4">
                                             <label class="small d-block">ESTADO</label>
                                             <div class="custom-control custom-switch">
                                                 <input type="checkbox" class="custom-control-input" id="status"
@@ -158,9 +214,17 @@ id="previewContainer" class="row"></div>
                                     class="form-control form-control-sm">
                             </div>
 
-                            <div class="form-group">
+                            {{--   <div class="form-group">
                                 <label class="small">DESCRIPCIÓN *</label>
                                 <textarea name="description" id="description" class="form-control form-control-sm"></textarea>
+                            </div> --}}
+                            <div class="form-group">
+                                <label class="small font-weight-bold text-secondary">
+                                    DESCRIPCIÓN <span class="text-danger">*</span>
+                                </label>
+                                <textarea name="description" id="description" rows="6" class="form-control form-control-sm"
+                                    placeholder="Escribe el contenido del post..."></textarea>
+                                <span class="invalid-feedback" id="content-error"></span>
                             </div>
 
                             <div class="text-right">

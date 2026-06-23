@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('subtitle', 'Usuarios')
+@section('subtitle', 'Proveedores')
 
 @section('header')
     <div class="container-fluid">
@@ -8,15 +8,12 @@
 
             <div class="col-sm-6 d-flex align-items-center gap-3">
                 <h1 class="m-0 text-bold text-dark">
-                    <i class="fas fa-layer-group text-info mr-1"></i>
-                    Categorías
+                    <i class="fas fa-truck text-success mr-1"></i>
+                    Proveedores
 
-
-                    {{-- @can('admin.users.store') --}}
-                    <button class="btn btn-app bg-dark btn-new" type="button" data-toggle="modal" data-target="#categoryModal">
+                    <button class="btn btn-app bg-dark btn-new" type="button" data-toggle="modal" data-target="#supplierModal">
                         <i class="fas fa-plus-circle"></i> Nuevo
                     </button>
-                    {{--      @endcan --}}
                 </h1>
             </div>
 
@@ -24,12 +21,12 @@
                 <nav aria-label="breadcrumb">
                     <ol class="breadcrumb float-sm-right bg-transparent p-0 m-0">
                         <li class="breadcrumb-item">
-                            <a href="{{ route('home') }}" class="text-info">
+                            <a href="{{ route('home') }}" class="text-success">
                                 <i class="fa fa-house-user"></i> Home
                             </a>
                         </li>
                         <li class="breadcrumb-item active">
-                            Categorías
+                            Proveedores
                         </li>
                     </ol>
                 </nav>
@@ -46,41 +43,39 @@
         <div class="card-body p-3">
 
             <div class="table-responsive">
-                <table id="tableCategory" class="table table-hover table-bordered align-middle mb-0 text-center">
+                <table id="tableSupplier" class="table table-hover table-bordered align-middle mb-0 text-center">
+
                     <thead class="bg-light text-uppercase text-secondary small">
                         <tr>
                             <th width="5%">#</th>
                             <th width="10%">ID</th>
                             <th>NOMBRE</th>
-                            <th>CATEGORÍA PADRE</th>
-                            <th>DESCRIPCIÓN</th>
-                            <th width="10%">ESTADO</th>
-                            <th width="10%">ACCIONES</th>
+                            <th>RUC</th>
+                            <th>TELÉFONO</th>
+                            <th>EMAIL</th>
+                            <th width="15%">ESTADO</th>
+                            <th width="15%">ACCIONES</th>
                         </tr>
                     </thead>
-                </table>
 
+                </table>
             </div>
 
         </div>
     </div>
 
     {{-- Modal --}}
-    @include('admin.categories.partials.modal')
+    @include('admin.suppliers.partials.modal')
 
 @stop
-
-@push('css')
-    
-@endpush
-
 
 
 @push('js')
     <script>
         window.routes = {
-            categoryList: "{{ route('admin.categories.list') }}", // GET lista para DataTables
+            supplierList: "{{ route('admin.suppliers.list') }}"
         }
     </script>
-    @vite(['resources/js/pages/category.js'])
+
+    @vite(['resources/js/pages/supplier.js'])
 @endpush

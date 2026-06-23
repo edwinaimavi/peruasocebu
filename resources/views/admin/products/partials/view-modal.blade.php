@@ -1,5 +1,5 @@
-<div class="modal fade" id="productViewModal" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable" role="document">
+<div class="modal fade" id="productViewModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content shadow border-0">
 
             <!-- HEADER -->
@@ -25,6 +25,20 @@
                 <!-- META INFO -->
                 <div class="mb-3 text-muted small">
 
+                    <div class="mb-3">
+                        <h6 class="font-weight-bold text-dark mb-2">
+                            <i class="fas fa-money-bill-wave text-success mr-1"></i>
+                            Precios
+                        </h6>
+
+                        <div id="viewProductPrices" class="border rounded p-2 bg-light"></div>
+                    </div>
+
+                    <span class="mr-3">
+                        <i class="fas fa-barcode mr-1"></i>
+                        Modelo: <span id="viewProductModel"></span>
+                    </span>
+
                     <span class="mr-3">
                         <i class="fas fa-link mr-1"></i>
                         <span id="viewProductSlug"></span>
@@ -33,6 +47,11 @@
                     <span class="mr-3">
                         <i class="fas fa-folder-open mr-1"></i>
                         <span id="viewProductCategory"></span>
+                    </span>
+
+                    <span class="mr-3">
+                        <i class="fas fa-industry mr-1"></i>
+                        Marca: <span id="viewProductBrand"></span>
                     </span>
 
                     <span class="mr-3">
@@ -57,32 +76,23 @@
 
                 </div>
 
-                <!-- IMAGE -->
-                {{--      <div class="text-center mb-4">
-                    <img id="viewProductImage"
-                        class="img-fluid rounded shadow-sm d-none"
-                        style="max-height: 350px; object-fit: cover;">
-                </div> --}}
                 <!-- GALERÍA -->
                 <div class="mb-4">
 
-                    <!-- IMAGEN PRINCIPAL -->
                     <div class="text-center mb-3">
                         <img id="mainImage" class="img-fluid rounded shadow"
                             style="max-height: 350px; object-fit: cover;">
                     </div>
 
-                    <!-- MINIATURAS -->
                     <div id="imageThumbnails" class="d-flex flex-wrap gap-2 justify-content-center"></div>
 
                 </div>
-                <!-- SHORT DESCRIPTION -->
-                <div id="viewProductShort" class="border rounded p-2 bg-light mb-3 text-muted" style="font-size: 14px;">
-                </div>
+
+                <!-- SHORT -->
+                <div id="viewProductShort" class="border rounded p-2 bg-light mb-3 text-muted"></div>
 
                 <!-- DESCRIPTION -->
-                <div id="viewProductDescription" class="border rounded p-3 bg-light" style="line-height: 1.7;">
-                </div>
+                <div id="viewProductDescription" class="border rounded p-3 bg-light"></div>
 
             </div>
 
