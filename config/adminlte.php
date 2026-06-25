@@ -2,7 +2,7 @@
 
 return [
 
-    'title' => 'CiCoSyS',
+    'title' => 'PERU ASOCEBU',
     'title_prefix' => '',
     'title_postfix' => '',
 
@@ -18,16 +18,16 @@ return [
     | Branding
     |------------------------------------------------------------------
     */
-    'logo' => '<span style="color:#20e3b2;font-weight:600">CiCo</span><span style="color:#ffffff;font-weight:300">SyS</span>',
+    'logo' => '<span>PERU ASOCEBU</span>',
     'logo_img' => 'vendor/adminlte/dist/img/logo2.png',
     'logo_img_class' => 'brand-image img-circle elevation-3',
-    'logo_img_alt' => 'CiCoSyS',
+    'logo_img_alt' => 'PERU ASOCEBU',
 
     'auth_logo' => [
         'enabled' => true,
         'img' => [
             'path' => 'vendor/adminlte/dist/img/logo2.png',
-            'alt' => 'CiCoSyS',
+            'alt' => 'PERU ASOCEBU',
             'class' => 'img-circle elevation-3',
             'width' => 70,
             'height' => 70,
@@ -44,7 +44,7 @@ return [
         'mode' => 'fullscreen',
         'img' => [
             'path' => 'vendor/adminlte/dist/img/logo2.png',
-            'alt' => 'Cargando CiCoSyS...',
+            'alt' => 'Cargando PERU ASOCEBU...',
             'effect' => 'animation__pulse',
             'width' => 80,
             'height' => 80,
@@ -56,9 +56,9 @@ return [
     | User Menu
     |------------------------------------------------------------------
     */
-    'usermenu_enabled' => true,
+    'usermenu_enabled' => false,
     'usermenu_header' => true,
-    'usermenu_header_class' => 'bg-info',
+    'usermenu_header_class' => 'bg-success',
     'usermenu_image' => false,
     'usermenu_desc' => false,
     'usermenu_profile_url' => false,
@@ -89,8 +89,8 @@ return [
     |------------------------------------------------------------------
     */
     'classes_body' => 'text-sm',
-    'classes_sidebar' => 'sidebar-dark-info elevation-4',
-    'classes_topnav' => 'navbar-light shadow-sm',
+    'classes_sidebar' => 'sidebar-dark-success elevation-4',
+    'classes_topnav' => 'navbar-light',
     'classes_topnav_nav' => 'navbar-expand',
     'classes_topnav_container' => 'container-fluid',
 
@@ -138,6 +138,11 @@ return [
                 ['text' => 'Usuarios', 'url' => 'admin/users', 'icon' => 'fas fa-users'],
             ],
         ],
+
+        ['header' => 'GANADERIA'],
+        ['text' => 'Criaderos / Haciendas', 'url' => 'admin/ranches', 'icon' => 'fas fa-warehouse', 'can' => 'admin.ranches.index'],
+        ['text' => 'Propietarios', 'url' => 'admin/owners', 'icon' => 'fas fa-users', 'can' => 'admin.owners.index'],
+        ['text' => 'Ganado', 'url' => 'admin/cattle', 'icon' => 'fas fa-cow'],
 
         ['header' => 'NEGOCIO'],
         ['text' => 'Categorías', 'url' => 'admin/categories', 'icon' => 'fas fa-layer-group'],
@@ -260,7 +265,7 @@ return [
     |------------------------------------------------------------------
     */
     'custom_css' => [
-        'css/cicosys-theme.css',
+        'css/admin-modern.css',
     ],
 
     'livewire' => false,

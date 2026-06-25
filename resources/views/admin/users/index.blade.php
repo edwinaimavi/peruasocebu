@@ -4,66 +4,60 @@
 
 @section('header')
     <div class="container-fluid">
-        <div class="row mb-2">
-            <div class="col-sm-6">
-                <h1>
-                    <i class="fas fa-users"></i> Usuarios
-
-                    @can('admin.users.store')
-                        <button class="btn btn-app bg-dark" type="button" data-toggle="modal" data-target="#userModal">
-                            <i class="fas fa-plus-circle"></i> Nuevo
-                        </button>
-                    @endcan
-                </h1>
+        <div class="module-header">
+            <div class="module-heading">
+                <span class="module-heading-icon">
+                    <i class="fas fa-users"></i>
+                </span>
+                <div>
+                    <h1 class="module-title">Usuarios</h1>
+                    <p class="module-subtitle">
+                        Administra los accesos, datos de contacto y roles del equipo de PERU ASOCEBU.
+                    </p>
+                </div>
             </div>
 
-            <div class="col-sm-6">
-                <nav aria-label="breadcrumb">
-                    <ol class="breadcrumb float-sm-right">
-                        <li class="breadcrumb-item">
-                            <a href="{{ route('home') }}">
-                                <i class="fa fa-fw fa-house-user"></i> Home
-                            </a>
-                        </li>
-                        <li class="breadcrumb-item active" aria-current="page">
-                            <i class="fas fa-users"></i> Usuarios
-                        </li>
-                    </ol>
-                </nav>
-            </div>
+            @can('admin.users.store')
+                <button class="btn btn-create" type="button" data-toggle="modal" data-target="#userModal">
+                    <i class="fas fa-plus"></i> Nuevo Usuario
+                </button>
+            @endcan
         </div>
+
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item">
+                    <a href="{{ route('home') }}"><i class="fas fa-home mr-1"></i> Inicio</a>
+                </li>
+                <li class="breadcrumb-item active">Usuarios</li>
+            </ol>
+        </nav>
     </div>
 @stop
 
 @section('content_body')
-
-    <div class="card shadow-sm border-0 rounded-lg">
-        <div class="card-body p-3">
-
+    <div class="card">
+        <div class="card-body">
             <div class="table-responsive">
-                <table id="tableUser"
-                    class="tableStiles table table-hover align-middle mb-0 text-center shadow-sm rounded-lg">
+                <table id="tableUser" class="tableStiles table table-hover align-middle mb-0 text-center">
                     <thead>
                         <tr>
                             <th>#</th>
                             <th>ID</th>
                             <th>DNI</th>
-                            <th>NOMBRE</th>
-                            <th>EMAIL</th>
-                            <th>CEL</th>
-                            <th>STATUS</th>
-                            <th></th>
+                            <th>Nombre</th>
+                            <th>Correo</th>
+                            <th>Celular</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
                         </tr>
                     </thead>
                 </table>
             </div>
-
         </div>
     </div>
 
-    {{-- Modal --}}
     @include('admin.users.partials.modal')
-
 @stop
 
 @push('css')

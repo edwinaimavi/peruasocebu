@@ -4,8 +4,7 @@
         <div class="modal-content shadow-lg border-0 rounded-lg overflow-hidden">
 
             <!-- HEADER -->
-            <div class="modal-header align-items-center"
-                style="background: linear-gradient(90deg,#ffffff,#f3f6f8); border-bottom:1px solid #e6eaee;">
+            <div class="modal-header align-items-center">
                 <div class="d-flex align-items-center">
                     <div class="icon-circle bg-light mr-3 icon_modal">
                         <i class="fas fa-user text-secondary"></i>
@@ -22,7 +21,7 @@
             </div>
 
             <!-- BODY -->
-            <div class="modal-body p-3" style="background:#f8fbfc;">
+            <div class="modal-body p-3">
                 <form id="userForm" enctype="multipart/form-data" autocomplete="off" class="row">
                     @csrf
 
