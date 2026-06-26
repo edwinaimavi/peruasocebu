@@ -20,7 +20,16 @@
             <div class="modal-body p-3">
                 <div class="owner-detail-hero p-3 mb-3">
                     <div class="row align-items-center">
-                        <div class="col-md-8">
+                        <div class="col-md-2 text-center mb-3 mb-md-0">
+                            <div class="owner-detail-photo-wrap mx-auto">
+                                <img id="detailPhoto" class="owner-detail-photo d-none" src=""
+                                    alt="Foto del propietario">
+                                <div id="detailPhotoPlaceholder" class="owner-detail-photo-placeholder">
+                                    <i class="fas fa-user"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
                             <div class="owner-detail-label">Nombre / razón social</div>
                             <div class="owner-detail-value h4 mb-0" id="detailDisplayName">—</div>
                             <div class="text-muted mt-1" id="detailContactName">—</div>

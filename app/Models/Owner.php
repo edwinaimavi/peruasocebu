@@ -12,7 +12,7 @@ class Owner extends Model
 
     protected $fillable = [
         'document_type', 'document_number', 'full_name', 'business_name',
-        'phone', 'email', 'address', 'owner_type', 'notes', 'status',
+        'phone', 'email', 'address', 'photo_path', 'owner_type', 'notes', 'status',
     ];
 
     public function cattle(): HasMany

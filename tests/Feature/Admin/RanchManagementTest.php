@@ -151,3 +151,16 @@ it('valida los campos obligatorios y el formato del correo', function () {
     ])->assertUnprocessable()
         ->assertJsonValidationErrors(['name', 'email', 'status']);
 });
+
+it('valida la longitud de DNI y RUC al guardar', function (string $type, string $number) {
+    $this->postJson(route('admin.ranches.store'), [
+        'name' => 'Criadero de prueba',
+        'document_type' => $type,
+        'document_number' => $number,
+        'status' => 'active',
+    ])->assertUnprocessable()
+        ->assertJsonValidationErrors(['document_number']);
+})->with([
+    ['DNI', '1234567'],
+    ['RUC', '2012345678'],
+]);

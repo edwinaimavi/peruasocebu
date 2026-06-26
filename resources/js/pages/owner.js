@@ -1,6 +1,9 @@
 var divLoading = document.getElementById('divLoading');
 let tableOwner;
 let ownerSubmitting = false;
+let documentLookupPending = false;
+let ownerPhotoObjectUrl = null;
+let currentOwnerPhotoUrl = null;
 
 document.addEventListener('DOMContentLoaded', function () {
     $.ajaxSetup({
@@ -63,6 +66,25 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     $('#owner_type').on('change', updateOwnerTypeFields);
+    $('#btnSearchDocument').on('click', consultDocument);
+    $('#photo').on('change', function () {
+        const file = this.files && this.files[0];
+
+        if (!file) {
+            setOwnerPhotoPreview(null);
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = function (event) {
+            setOwnerPhotoPreview(event.target.result, {
+                fileName: file.name,
+                removable: true
+            });
+        };
+        reader.readAsDataURL(file);
+    });
+    $('#btnRemovePhotoPreview').on('click', clearSelectedOwnerPhoto);
 
     $('#ownerForm').on('submit', function (event) {
         event.preventDefault();
@@ -204,7 +226,386 @@ function prepareEditForm(owner) {
         $(`#${field}`).val(owner[field] ?? '');
     });
 
-    updateOwnerTypeFields();
+    updateOwnerTypeFields(false);
+    currentOwnerPhotoUrl = owner.photo_url || null;
+    setOwnerPhotoPreview(currentOwnerPhotoUrl);
+}
+
+function legacyConsultDocument() {
+    if (documentLookupPending) {
+        return;
+    }
+
+    const documentType = $('#document_type').val();
+    const documentNumber = $('#document_number').val().trim();
+    const validationMessage = validateDocumentLookup(documentType, documentNumber);
+
+    if (validationMessage) {
+        Swal.fire('AtenciÃ³n', validationMessage, 'warning');
+        return;
+    }
+
+    documentLookupPending = true;
+    setDocumentLookupButtonLoading(true);
+
+    Swal.fire({
+        title: 'Consultando documento...',
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        showConfirmButton: false,
+        didOpen: function () {
+            Swal.showLoading();
+        }
+    });
+
+    const url = window.ownerRoutes.consultDocument.replace(
+        '__NUMBER__',
+        encodeURIComponent(documentNumber)
+    );
+
+    $.get(url)
+        .done(function (response) {
+            Swal.close();
+            fillDocumentData(response.type, response.data || {}, documentNumber);
+            Swal.fire(
+                'Consulta completada',
+                `${response.type} encontrado correctamente.`,
+                'success'
+            );
+        })
+        .fail(function (xhr) {
+            Swal.close();
+
+            if (xhr.status === 422) {
+                Swal.fire('AtenciÃ³n', responseMessage(xhr), 'warning');
+                return;
+            }
+
+            if (xhr.status === 404) {
+                Swal.fire('Documento no encontrado', 'Documento no encontrado o no vÃ¡lido.', 'warning');
+                return;
+            }
+
+            Swal.fire(
+                'Error',
+                responseMessage(
+                    xhr,
+                    'No se pudo conectar con el servicio de consulta. Intente nuevamente.'
+                ),
+                'error'
+            );
+        })
+        .always(function () {
+            documentLookupPending = false;
+            setDocumentLookupButtonLoading(false);
+        });
+}
+
+function legacyValidateDocumentLookup(documentType, documentNumber) {
+    if (!documentType) {
+        return 'Seleccione el tipo de documento antes de buscar.';
+    }
+
+    if (!['DNI', 'RUC'].includes(documentType)) {
+        return 'La bÃºsqueda automÃ¡tica solo estÃ¡ disponible para DNI y RUC.';
+    }
+
+    if (!documentNumber) {
+        return 'Ingrese el nÃºmero de documento.';
+    }
+
+    if (!/^\d+$/.test(documentNumber)) {
+        return 'El nÃºmero de documento debe contener solo nÃºmeros.';
+    }
+
+    if (documentType === 'DNI' && documentNumber.length !== 8) {
+        return 'El DNI debe tener 8 dÃ­gitos.';
+    }
+
+    if (documentType === 'RUC' && documentNumber.length !== 11) {
+        return 'El RUC debe tener 11 dÃ­gitos.';
+    }
+
+    return null;
+}
+
+function legacyFillDocumentData(type, data, documentNumber) {
+    $('#document_type').val(type);
+    $('#document_number').val(firstValue(data, ['numeroDocumento', 'numero_documento']) || documentNumber);
+
+    if (type === 'DNI') {
+        $('#owner_type').val('person').trigger('change');
+
+        const fullName = firstValue(data, ['nombreCompleto', 'nombre_completo'])
+            || [
+                firstValue(data, ['nombres']),
+                firstValue(data, ['apellidoPaterno', 'apellido_paterno']),
+                firstValue(data, ['apellidoMaterno', 'apellido_materno'])
+            ].filter(Boolean).join(' ');
+
+        if (fullName) {
+            $('#full_name').val(fullName.trim());
+        }
+
+        return;
+    }
+
+    $('#owner_type').val('company').trigger('change');
+
+    const businessName = firstValue(data, ['razonSocial', 'razon_social']);
+    const tradeName = firstValue(data, ['nombreComercial', 'nombre_comercial']);
+    const fieldMap = {
+        business_name: businessName,
+        full_name: tradeName || businessName,
+        address: firstValue(data, ['direccion'])
+    };
+
+    Object.entries(fieldMap).forEach(function ([field, value]) {
+        if (value) {
+            $(`#${field}`).val(value);
+        }
+    });
+}
+
+function firstValue(data, keys) {
+    for (const key of keys) {
+        if (data[key] !== undefined && data[key] !== null && String(data[key]).trim() !== '') {
+            return String(data[key]).trim();
+        }
+    }
+
+    return '';
+}
+
+function responseMessage(xhr, fallback = 'OcurriÃ³ un error al consultar el documento.') {
+    return xhr.responseJSON && xhr.responseJSON.message
+        ? xhr.responseJSON.message
+        : fallback;
+}
+
+function consultDocument() {
+    if (documentLookupPending) {
+        return;
+    }
+
+    const ownerType = $('#owner_type').val();
+    const documentType = $('#document_type').val();
+    const documentNumber = $('#document_number').val().trim();
+    const validationMessage = validateDocumentLookup(ownerType, documentType, documentNumber);
+
+    if (validationMessage) {
+        Swal.fire('Atenci\u00f3n', validationMessage, 'warning');
+        return;
+    }
+
+    documentLookupPending = true;
+    setDocumentLookupButtonLoading(true);
+
+    Swal.fire({
+        title: 'Consultando documento...',
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        showConfirmButton: false,
+        didOpen: function () {
+            Swal.showLoading();
+        }
+    });
+
+    const url = window.ownerRoutes.consultDocument.replace(
+        '__NUMBER__',
+        encodeURIComponent(documentNumber)
+    );
+
+    $.get(url)
+        .done(function (response) {
+            Swal.close();
+            fillDocumentData(ownerType, response.type, response.data || {}, documentNumber);
+            Swal.fire('Consulta completada', successDocumentMessage(ownerType, response.type), 'success');
+        })
+        .fail(function (xhr) {
+            Swal.close();
+
+            if (xhr.status === 422) {
+                Swal.fire('Atenci\u00f3n', responseMessageFixed(xhr), 'warning');
+                return;
+            }
+
+            if (xhr.status === 404) {
+                Swal.fire('Documento no encontrado', 'Documento no encontrado o no v\u00e1lido.', 'warning');
+                return;
+            }
+
+            Swal.fire(
+                'Error',
+                responseMessageFixed(
+                    xhr,
+                    'No se pudo conectar con el servicio de consulta. Intente nuevamente.'
+                ),
+                'error'
+            );
+        })
+        .always(function () {
+            documentLookupPending = false;
+            setDocumentLookupButtonLoading(false);
+        });
+}
+
+function validateDocumentLookup(ownerType, documentType, documentNumber) {
+    if (!ownerType) {
+        return 'Seleccione el tipo de propietario.';
+    }
+
+    if (!documentType) {
+        return 'Seleccione el tipo de documento.';
+    }
+
+    if (!['DNI', 'RUC'].includes(documentType)) {
+        return 'La b\u00fasqueda autom\u00e1tica solo est\u00e1 disponible para DNI y RUC.';
+    }
+
+    if (!documentNumber) {
+        return 'Ingrese el n\u00famero de documento.';
+    }
+
+    if (!/^\d+$/.test(documentNumber)) {
+        return 'El n\u00famero de documento debe contener solo n\u00fameros.';
+    }
+
+    if (documentType === 'DNI' && documentNumber.length !== 8) {
+        return 'El DNI debe tener 8 d\u00edgitos.';
+    }
+
+    if (documentType === 'RUC' && documentNumber.length !== 11) {
+        return 'El RUC debe tener 11 d\u00edgitos.';
+    }
+
+    if (ownerType === 'company' && documentType !== 'RUC') {
+        return 'Las empresas solo pueden consultar por RUC.';
+    }
+
+    if (ownerType === 'company' && !documentNumber.startsWith('20')) {
+        return 'El RUC de una empresa debe empezar con 20.';
+    }
+
+    if (ownerType === 'person' && documentType === 'RUC' && !documentNumber.startsWith('10')) {
+        return 'El RUC de una persona natural debe empezar con 10.';
+    }
+
+    return null;
+}
+
+function fillDocumentData(ownerType, type, data, documentNumber) {
+    $('#document_type').val(type);
+    $('#document_number').val(firstValue(data, ['numeroDocumento', 'numero_documento']) || documentNumber);
+
+    if (type === 'DNI') {
+        $('#owner_type').val('person');
+        updateOwnerTypeFields(false);
+
+        const fullName = firstValue(data, ['nombreCompleto', 'nombre_completo'])
+            || [
+                firstValue(data, ['nombres']),
+                firstValue(data, ['apellidoPaterno', 'apellido_paterno']),
+                firstValue(data, ['apellidoMaterno', 'apellido_materno'])
+            ].filter(Boolean).join(' ');
+
+        if (fullName) {
+            $('#full_name').val(fullName.trim());
+        }
+
+        return;
+    }
+
+    $('#owner_type').val(ownerType);
+    updateOwnerTypeFields(false);
+
+    const businessName = firstValue(data, ['razonSocial', 'razon_social']);
+    const tradeName = firstValue(data, ['nombreComercial', 'nombre_comercial']);
+    const fieldMap = {
+        business_name: businessName,
+        full_name: ownerType === 'company' ? tradeName || businessName : businessName || tradeName,
+        address: firstValue(data, ['direccion'])
+    };
+
+    Object.entries(fieldMap).forEach(function ([field, value]) {
+        if (value) {
+            $(`#${field}`).val(value);
+        }
+    });
+}
+
+function successDocumentMessage(ownerType, documentType) {
+    if (documentType === 'DNI') {
+        return 'DNI encontrado correctamente.';
+    }
+
+    return ownerType === 'company'
+        ? 'RUC de empresa encontrado correctamente.'
+        : 'RUC de persona natural encontrado correctamente.';
+}
+
+function responseMessageFixed(xhr, fallback = 'Ocurri\u00f3 un error al consultar el documento.') {
+    return xhr.responseJSON && xhr.responseJSON.message
+        ? xhr.responseJSON.message
+        : fallback;
+}
+
+function setDocumentLookupButtonLoading(isLoading) {
+    const $button = $('#btnSearchDocument');
+
+    $button.prop('disabled', isLoading);
+    $button.find('i')
+        .toggleClass('fa-search', !isLoading)
+        .toggleClass('fa-spinner fa-spin', isLoading);
+    $button.find('span').text(isLoading ? 'Buscando' : 'Buscar');
+}
+
+function setOwnerPhotoPreview(url, options = {}) {
+    if (ownerPhotoObjectUrl) {
+        URL.revokeObjectURL(ownerPhotoObjectUrl);
+        ownerPhotoObjectUrl = null;
+    }
+
+    if (options.isObjectUrl) {
+        ownerPhotoObjectUrl = url;
+    }
+
+    const $preview = $('#photoPreview');
+    const $placeholder = $('#photoPlaceholder');
+    const $fileName = $('#photoFileName');
+    const $removeButton = $('#btnRemovePhotoPreview');
+
+    if (!url) {
+        $preview.attr('src', '').addClass('d-none');
+        $placeholder.removeClass('d-none');
+        $fileName.text('Ningún archivo seleccionado');
+        $removeButton.addClass('d-none');
+        return;
+    }
+
+    $preview.attr('src', url).removeClass('d-none');
+    $placeholder.addClass('d-none');
+    $fileName.text(options.fileName || 'Foto actual');
+    $removeButton.toggleClass('d-none', !options.removable);
+}
+
+function clearSelectedOwnerPhoto() {
+    $('#photo').val('');
+    setOwnerPhotoPreview(currentOwnerPhotoUrl);
+}
+
+function setOwnerDetailPhoto(url) {
+    const $photo = $('#detailPhoto');
+    const $placeholder = $('#detailPhotoPlaceholder');
+
+    if (!url) {
+        $photo.attr('src', '').addClass('d-none');
+        $placeholder.removeClass('d-none');
+        return;
+    }
+
+    $photo.attr('src', url).removeClass('d-none');
+    $placeholder.addClass('d-none');
 }
 
 function fillDetailModal(owner) {
@@ -224,6 +625,7 @@ function fillDetailModal(owner) {
     $('#detailNotes').text(valueOrDash(owner.notes));
     $('#detailCreatedAt').text(valueOrDash(owner.created_at_formatted));
     $('#detailUpdatedAt').text(valueOrDash(owner.updated_at_formatted));
+    setOwnerDetailPhoto(owner.photo_url || null);
     $('#detailOwnerType').html(
         isCompany
             ? '<span class="badge badge-info px-3 py-2">Empresa</span>'
@@ -249,16 +651,47 @@ function resetOwnerForm() {
     $('#status').val('active');
     $('#ownerModalLabel').text('Nuevo Propietario');
     $('#saveOwnerButton span').text('Guardar Propietario');
+    currentOwnerPhotoUrl = null;
     clearValidation();
     updateOwnerTypeFields();
+    setOwnerPhotoPreview(null);
 }
 
-function updateOwnerTypeFields() {
+function legacyUpdateOwnerTypeFields() {
     const isCompany = $('#owner_type').val() === 'company';
 
     $('#businessNameGroup').toggleClass('d-none', !isCompany);
     $('#fullNameLabel').text(isCompany ? 'Representante o contacto' : 'Nombre completo');
     $('#fullNameHelp').toggleClass('d-none', !isCompany);
+}
+
+function updateOwnerTypeFields(forceResetDocument) {
+    const isCompany = $('#owner_type').val() === 'company';
+    const shouldResetDocument = forceResetDocument === true
+        || (forceResetDocument && forceResetDocument.type === 'change');
+    const $documentType = $('#document_type');
+
+    $('#businessNameGroup').toggleClass('d-none', !isCompany);
+    $('#fullNameLabel').text(isCompany ? 'Representante o contacto' : 'Nombre completo');
+    $('#fullNameHelp').toggleClass('d-none', !isCompany);
+
+    if (isCompany) {
+        $documentType.find('option').each(function () {
+            const isRuc = this.value === 'RUC';
+            $(this).prop('disabled', !isRuc).toggle(isRuc);
+        });
+        $documentType.val('RUC');
+    } else {
+        $documentType.find('option').prop('disabled', false).show();
+
+        if (shouldResetDocument || !$documentType.val()) {
+            $documentType.val('DNI');
+        }
+    }
+
+    if (shouldResetDocument) {
+        $('#document_number').val('');
+    }
 }
 
 function clearValidation() {

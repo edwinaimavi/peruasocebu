@@ -65,8 +65,18 @@
                                             <label class="small font-weight-bold text-secondary" for="document_number">
                                                 Número de documento
                                             </label>
-                                            <input class="form-control form-control-sm" id="document_number"
-                                                name="document_number" type="text" maxlength="30">
+                                            <div class="input-group input-group-sm">
+                                                <input class="form-control" id="document_number"
+                                                    name="document_number" type="text" maxlength="30"
+                                                    inputmode="numeric">
+                                                <div class="input-group-append">
+                                                    <button class="btn btn-outline-primary" id="btnSearchDocument"
+                                                        type="button" title="Consultar DNI o RUC">
+                                                        <i class="fas fa-search mr-1"></i>
+                                                        <span>Buscar</span>
+                                                    </button>
+                                                </div>
+                                            </div>
                                             <div class="invalid-feedback" id="document_number-error"></div>
                                         </div>
                                         <div class="form-group col-md-5">

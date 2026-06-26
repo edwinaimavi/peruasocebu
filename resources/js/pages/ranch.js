@@ -1,6 +1,7 @@
 var divLoading = document.getElementById('divLoading');
 let tableRanch;
 let ranchSubmitting = false;
+let documentLookupPending = false;
 const previewObjectUrls = new Map();
 
 document.addEventListener('DOMContentLoaded', function () {
@@ -112,6 +113,8 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
+    $('#btnSearchDocument').on('click', consultDocument);
+
     $(document).on('click', '.editRanch', function () {
         const ranchId = $(this).data('id');
         showLoading();
@@ -215,6 +218,167 @@ function prepareEditForm(ranch) {
     setPreview('logoPreview', 'logoPlaceholder', ranch.logo_url);
     setPreview('sealPreview', 'sealPlaceholder', ranch.seal_url);
     setPreview('signaturePreview', 'signaturePlaceholder', ranch.signature_url);
+}
+
+function consultDocument() {
+    if (documentLookupPending) {
+        return;
+    }
+
+    const documentType = $('#document_type').val();
+    const documentNumber = $('#document_number').val().trim();
+    const validationMessage = validateDocumentLookup(documentType, documentNumber);
+
+    if (validationMessage) {
+        Swal.fire('Atención', validationMessage, 'warning');
+        return;
+    }
+
+    documentLookupPending = true;
+    setDocumentLookupButtonLoading(true);
+
+    Swal.fire({
+        title: 'Consultando documento...',
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        showConfirmButton: false,
+        didOpen: function () {
+            Swal.showLoading();
+        }
+    });
+
+    const url = window.ranchRoutes.consultDocument.replace(
+        '__NUMBER__',
+        encodeURIComponent(documentNumber)
+    );
+
+    $.get(url)
+        .done(function (response) {
+            Swal.close();
+            fillDocumentData(response.type, response.data || {}, documentNumber);
+            Swal.fire(
+                'Consulta completada',
+                `${response.type} encontrado correctamente.`,
+                'success'
+            );
+        })
+        .fail(function (xhr) {
+            Swal.close();
+
+            if (xhr.status === 422) {
+                Swal.fire('Atención', responseMessage(xhr), 'warning');
+                return;
+            }
+
+            if (xhr.status === 404) {
+                Swal.fire('Documento no encontrado', 'Documento no encontrado o no válido.', 'warning');
+                return;
+            }
+
+            Swal.fire(
+                'Error',
+                responseMessage(
+                    xhr,
+                    'No se pudo conectar con el servicio de consulta. Intente nuevamente.'
+                ),
+                'error'
+            );
+        })
+        .always(function () {
+            documentLookupPending = false;
+            setDocumentLookupButtonLoading(false);
+        });
+}
+
+function validateDocumentLookup(documentType, documentNumber) {
+    if (!documentType) {
+        return 'Seleccione el tipo de documento antes de buscar.';
+    }
+
+    if (!['DNI', 'RUC'].includes(documentType)) {
+        return 'La consulta automática solo está disponible para DNI y RUC.';
+    }
+
+    if (!documentNumber) {
+        return 'Ingrese el número de documento antes de buscar.';
+    }
+
+    if (!/^\d+$/.test(documentNumber)) {
+        return 'El número de documento debe contener solo números.';
+    }
+
+    if (documentType === 'DNI' && documentNumber.length !== 8) {
+        return 'El DNI debe tener 8 dígitos.';
+    }
+
+    if (documentType === 'RUC' && documentNumber.length !== 11) {
+        return 'El RUC debe tener 11 dígitos.';
+    }
+
+    return null;
+}
+
+function fillDocumentData(type, data, documentNumber) {
+    $('#document_type').val(type);
+    $('#document_number').val(firstValue(data, ['numeroDocumento', 'numero_documento']) || documentNumber);
+
+    if (type === 'DNI') {
+        const fullName = firstValue(data, ['nombreCompleto', 'nombre_completo'])
+            || [
+                firstValue(data, ['nombres']),
+                firstValue(data, ['apellidoPaterno', 'apellido_paterno']),
+                firstValue(data, ['apellidoMaterno', 'apellido_materno'])
+            ].filter(Boolean).join(' ');
+
+        if (fullName) {
+            $('#representative_name').val(fullName.trim());
+        }
+
+        return;
+    }
+
+    const businessName = firstValue(data, ['razonSocial', 'razon_social']);
+    const tradeName = firstValue(data, ['nombreComercial', 'nombre_comercial']);
+    const fieldMap = {
+        business_name: businessName,
+        representative_name: tradeName || businessName,
+        address: firstValue(data, ['direccion']),
+        department: firstValue(data, ['departamento']),
+        province: firstValue(data, ['provincia']),
+        district: firstValue(data, ['distrito'])
+    };
+
+    Object.entries(fieldMap).forEach(function ([field, value]) {
+        if (value) {
+            $(`#${field}`).val(value);
+        }
+    });
+}
+
+function firstValue(data, keys) {
+    for (const key of keys) {
+        if (data[key] !== undefined && data[key] !== null && String(data[key]).trim() !== '') {
+            return String(data[key]).trim();
+        }
+    }
+
+    return '';
+}
+
+function responseMessage(xhr, fallback = 'Ocurrió un error al consultar el documento.') {
+    return xhr.responseJSON && xhr.responseJSON.message
+        ? xhr.responseJSON.message
+        : fallback;
+}
+
+function setDocumentLookupButtonLoading(isLoading) {
+    const $button = $('#btnSearchDocument');
+
+    $button.prop('disabled', isLoading);
+    $button.find('i')
+        .toggleClass('fa-search', !isLoading)
+        .toggleClass('fa-spinner fa-spin', isLoading);
+    $button.find('span').text(isLoading ? 'Buscando' : 'Buscar');
 }
 
 function fillDetailModal(ranch) {

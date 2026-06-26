@@ -189,6 +189,7 @@
         window.ranchRoutes = {
             index: @json(route('admin.ranches.index')),
             list: @json(route('admin.ranches.list')),
+            consultDocument: @json(route('admin.documents.consult', ['numero' => '__NUMBER__'])),
         };
     </script>
     @vite(['resources/js/pages/ranch.js'])

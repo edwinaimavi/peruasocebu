@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Owner;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use Yajra\DataTables\Facades\DataTables;
 
@@ -59,7 +61,15 @@ class OwnerController extends Controller
 
     public function store(Request $request): JsonResponse
     {
-        Owner::create($this->validatedData($request));
+        $data = $this->validatedData($request);
+        $uploadedPath = $this->storePhoto($request);
+
+        try {
+            Owner::create(array_merge($data, $uploadedPath));
+        } catch (\Throwable $exception) {
+            $this->deletePhoto($uploadedPath['photo_path'] ?? null);
+            throw $exception;
+        }
 
         return response()->json([
             'message' => 'Propietario registrado correctamente.',
@@ -72,6 +82,7 @@ class OwnerController extends Controller
             'owner' => array_merge($owner->toArray(), [
                 'owner_type_label' => $owner->owner_type === 'company' ? 'Empresa' : 'Persona',
                 'document_type_label' => $this->documentTypeLabel($owner->document_type),
+                'photo_url' => $this->photoUrl($owner->photo_path),
                 'status_label' => $owner->status === 'active' ? 'Activo' : 'Inactivo',
                 'created_at_formatted' => $owner->created_at?->format('d/m/Y H:i'),
                 'updated_at_formatted' => $owner->updated_at?->format('d/m/Y H:i'),
@@ -81,7 +92,18 @@ class OwnerController extends Controller
 
     public function update(Request $request, Owner $owner): JsonResponse
     {
-        $owner->update($this->validatedData($request));
+        $data = $this->validatedData($request);
+        $uploadedPath = $this->storePhoto($request);
+        $oldPhotoPath = $uploadedPath ? $owner->photo_path : null;
+
+        try {
+            $owner->update(array_merge($data, $uploadedPath));
+        } catch (\Throwable $exception) {
+            $this->deletePhoto($uploadedPath['photo_path'] ?? null);
+            throw $exception;
+        }
+
+        $this->deletePhoto($oldPhotoPath);
 
         return response()->json([
             'message' => 'Propietario actualizado correctamente.',
@@ -99,26 +121,78 @@ class OwnerController extends Controller
 
     private function validatedData(Request $request): array
     {
+        $ownerType = $request->input('owner_type');
+        $documentType = $request->input('document_type');
+
         return $request->validate([
             'owner_type' => ['required', 'in:person,company'],
-            'document_type' => ['nullable', 'in:DNI,RUC,CE,PASSPORT,OTHER'],
-            'document_number' => ['nullable', 'string', 'max:30'],
+            'document_type' => [
+                Rule::requiredIf($ownerType === 'company'),
+                'nullable',
+                Rule::in($ownerType === 'company'
+                    ? ['RUC']
+                    : ['DNI', 'RUC', 'CE', 'PASSPORT', 'OTHER']),
+            ],
+            'document_number' => [
+                'nullable',
+                'string',
+                'max:30',
+                Rule::when($ownerType === 'company', ['digits:11', 'starts_with:20']),
+                Rule::when($ownerType === 'person' && $documentType === 'DNI', ['digits:8']),
+                Rule::when($ownerType === 'person' && $documentType === 'RUC', ['digits:11', 'starts_with:10']),
+            ],
             'full_name' => ['required', 'string', 'max:255'],
             'business_name' => ['nullable', 'string', 'max:255'],
             'phone' => ['nullable', 'string', 'max:30'],
             'email' => ['nullable', 'email', 'max:255'],
             'address' => ['nullable', 'string', 'max:255'],
+            'photo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
             'notes' => ['nullable', 'string'],
             'status' => ['required', 'in:active,inactive'],
         ], [
             'owner_type.required' => 'Seleccione el tipo de propietario.',
             'owner_type.in' => 'El tipo de propietario seleccionado no es válido.',
+            'document_type.required' => 'Seleccione el tipo de documento.',
             'document_type.in' => 'El tipo de documento seleccionado no es válido.',
+            'document_number.digits' => $documentType === 'DNI'
+                ? 'El DNI debe tener 8 dígitos.'
+                : 'El RUC debe tener 11 dígitos.',
+            'document_number.starts_with' => match (true) {
+                $ownerType === 'company' => 'El RUC de una empresa debe empezar con 20.',
+                $ownerType === 'person' && $documentType === 'RUC' => 'El RUC de una persona natural debe empezar con 10.',
+                default => 'El número de documento no es válido.',
+            },
             'full_name.required' => 'El nombre completo o contacto es obligatorio.',
             'email.email' => 'Ingrese un correo electrónico válido.',
+            'photo.image' => 'La foto debe ser una imagen.',
+            'photo.mimes' => 'La foto debe ser JPG, PNG o WEBP.',
+            'photo.max' => 'La foto no debe superar los 4 MB.',
             'status.required' => 'Seleccione el estado del propietario.',
             'status.in' => 'El estado seleccionado no es válido.',
         ]);
+    }
+
+    private function storePhoto(Request $request): array
+    {
+        if (! $request->hasFile('photo')) {
+            return [];
+        }
+
+        return [
+            'photo_path' => $request->file('photo')->store('owners/photos', 'public'),
+        ];
+    }
+
+    private function deletePhoto(?string $path): void
+    {
+        if ($path) {
+            Storage::disk('public')->delete($path);
+        }
+    }
+
+    private function photoUrl(?string $path): ?string
+    {
+        return $path ? Storage::url($path) : null;
     }
 
     private function documentTypeLabel(?string $documentType): string

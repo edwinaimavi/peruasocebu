@@ -25,6 +25,37 @@
 
                     <div class="card border-0 rounded-lg shadow-sm">
                         <div class="card-body">
+                            <div class="owner-photo-card mb-3">
+                                <div class="owner-photo-preview-wrap">
+                                    <img id="photoPreview" class="owner-photo-preview d-none" src=""
+                                        alt="Foto del propietario">
+                                    <div id="photoPlaceholder" class="owner-photo-placeholder">
+                                        <i class="fas fa-user"></i>
+                                        <span>Sin foto</span>
+                                    </div>
+                                </div>
+                                <div class="owner-photo-controls">
+                                    <div class="owner-photo-title">
+                                        <i class="fas fa-camera mr-1"></i>
+                                        Foto del propietario
+                                    </div>
+                                    <div class="owner-photo-subtitle">JPG, PNG o WEBP · Máx. 4 MB</div>
+                                    <input class="d-none" id="photo" name="photo" type="file"
+                                        accept="image/jpeg,image/png,image/webp">
+                                    <div class="owner-photo-actions">
+                                        <label for="photo" class="btn btn-photo-upload mb-0">
+                                            <i class="fas fa-upload mr-1"></i> Seleccionar foto
+                                        </label>
+                                        <button class="btn btn-photo-remove d-none" id="btnRemovePhotoPreview"
+                                            type="button">
+                                            <i class="fas fa-times mr-1"></i> Quitar
+                                        </button>
+                                    </div>
+                                    <div class="owner-photo-filename" id="photoFileName">Ningún archivo seleccionado</div>
+                                    <div class="invalid-feedback d-block" id="photo-error"></div>
+                                </div>
+                            </div>
+
                             <div class="form-row">
                                 <div class="form-group col-md-4">
                                     <label class="small font-weight-bold text-secondary" for="owner_type">
@@ -56,8 +87,17 @@
                                     <label class="small font-weight-bold text-secondary" for="document_number">
                                         Número de documento
                                     </label>
-                                    <input class="form-control form-control-sm" id="document_number"
-                                        name="document_number" type="text" maxlength="30">
+                                    <div class="input-group input-group-sm">
+                                        <input class="form-control" id="document_number" name="document_number"
+                                            type="text" maxlength="30" inputmode="numeric">
+                                        <div class="input-group-append">
+                                            <button class="btn btn-outline-primary" id="btnSearchDocument"
+                                                type="button">
+                                                <i class="fas fa-search mr-1"></i>
+                                                <span>Buscar</span>
+                                            </button>
+                                        </div>
+                                    </div>
                                     <div class="invalid-feedback" id="document_number-error"></div>
                                 </div>
                             </div>

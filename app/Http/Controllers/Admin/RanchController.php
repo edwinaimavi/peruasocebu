@@ -7,6 +7,7 @@ use App\Models\Ranch;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use Yajra\DataTables\Facades\DataTables;
 
@@ -121,8 +122,14 @@ class RanchController extends Controller
         return $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'business_name' => ['nullable', 'string', 'max:255'],
-            'document_type' => ['nullable', 'string', 'max:30'],
-            'document_number' => ['nullable', 'string', 'max:30'],
+            'document_type' => ['nullable', 'in:DNI,RUC,CE,Otro'],
+            'document_number' => [
+                'nullable',
+                'string',
+                'max:30',
+                Rule::when($request->input('document_type') === 'DNI', ['regex:/^\d{8}$/']),
+                Rule::when($request->input('document_type') === 'RUC', ['regex:/^\d{11}$/']),
+            ],
             'address' => ['nullable', 'string', 'max:255'],
             'department' => ['nullable', 'string', 'max:100'],
             'province' => ['nullable', 'string', 'max:100'],
@@ -137,6 +144,10 @@ class RanchController extends Controller
             'status' => ['required', 'in:active,inactive'],
         ], [
             'name.required' => 'El nombre del criadero es obligatorio.',
+            'document_type.in' => 'El tipo de documento seleccionado no es válido.',
+            'document_number.regex' => $request->input('document_type') === 'DNI'
+                ? 'El DNI debe tener 8 dígitos.'
+                : 'El RUC debe tener 11 dígitos.',
             'email.email' => 'Ingrese un correo electrónico válido.',
             'logo.image' => 'El logo debe ser una imagen.',
             'seal.image' => 'El sello debe ser una imagen.',
