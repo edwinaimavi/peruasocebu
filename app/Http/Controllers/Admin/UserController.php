@@ -47,7 +47,7 @@ class UserController extends Controller
                  $rol = $user->roles->first()?->id ?? ''; 
                 return view('admin.users.partials.acciones', compact('user','statusOriginal','rutaFoto','rol'))->render();
             })
-            ->rawColumns(['status','acciones'])
+            ->rawColumns(['dni', 'name', 'email', 'phone', 'status','acciones'])
             ->make(true);
     }
     public function create()
@@ -82,7 +82,7 @@ class UserController extends Controller
         $user->roles()->sync([$request->input('role')]);
 
 
-        return response()->json(['message' => 'Vehículo registrado correctamente']);
+        return response()->json(['message' => 'Usuario registrado correctamente']);
         
     }
 

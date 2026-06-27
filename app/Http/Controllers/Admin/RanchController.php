@@ -34,10 +34,10 @@ class RanchController extends Controller
             ->addIndexColumn()
             ->editColumn('document_number', function (Ranch $ranch) {
                 if (! $ranch->document_number) {
-                    return '<span class="text-muted">—</span>';
+                    return '—';
                 }
 
-                return e(trim(($ranch->document_type ? $ranch->document_type.' ' : '').$ranch->document_number));
+                return trim(($ranch->document_type ? $ranch->document_type.' ' : '').$ranch->document_number);
             })
             ->editColumn('status', fn (Ranch $ranch) => $ranch->status === 'active'
                 ? '<span class="badge badge-success">Activo</span>'
@@ -47,7 +47,7 @@ class RanchController extends Controller
                 'admin.ranches.partials.acciones',
                 compact('ranch')
             )->render())
-            ->rawColumns(['document_number', 'status', 'acciones'])
+            ->rawColumns(['name', 'business_name', 'document_number', 'phone', 'email', 'representative_name', 'address', 'status', 'acciones'])
             ->toJson();
     }
 

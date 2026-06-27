@@ -17,8 +17,8 @@ document.addEventListener('DOMContentLoaded', function () {
             { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false },
             { data: 'id', name: 'id' },
             { data: 'code', name: 'code' },
-            { data: 'name', name: 'name' },
-            { data: 'origin_country', name: 'origin_country', defaultContent: '—' },
+            { data: 'name', name: 'name', render: $.fn.dataTable.render.text() },
+            { data: 'origin_country', name: 'origin_country', defaultContent: '—', render: $.fn.dataTable.render.text() },
             { data: 'status', name: 'status', orderable: false, searchable: false },
             { data: 'created_at', name: 'created_at' },
             { data: 'acciones', name: 'acciones', orderable: false, searchable: false }
@@ -59,8 +59,8 @@ document.addEventListener('DOMContentLoaded', function () {
         drawCallback: hideLoading
     });
 
-    $('#code').on('input', function () {
-        this.value = this.value.toUpperCase().replace(/\s+/g, '');
+    $('#name').on('input', function () {
+        updateBreedCodePreview();
     });
 
     $('#breedForm').on('submit', function (event) {
@@ -193,6 +193,7 @@ function prepareEditForm(breed) {
     resetBreedForm();
 
     $('#breedForm').attr('data-id', breed.id);
+    $('#breedForm').attr('data-original-name', breed.name ?? '');
     $('#breedModalLabel').text('Editar Raza');
     $('#saveBreedButton span').text('Actualizar Raza');
 
@@ -228,11 +229,44 @@ function resetBreedForm() {
     }
 
     form.reset();
-    $('#breedForm').removeAttr('data-id');
+    $('#breedForm').removeAttr('data-id data-original-name');
     $('#status').val('active');
     $('#breedModalLabel').text('Nueva Raza');
     $('#saveBreedButton span').text('Guardar Raza');
     clearValidation();
+}
+
+function updateBreedCodePreview() {
+    const $form = $('#breedForm');
+    const currentName = $('#name').val() || '';
+    const originalName = $form.attr('data-original-name') || '';
+    const isEditing = Boolean($form.attr('data-id'));
+
+    if (isEditing && normalizeBreedName(currentName) === normalizeBreedName(originalName)) {
+        return;
+    }
+
+    const prefix = buildBreedCodePrefix(currentName);
+
+    $('#code').val(prefix ? `${prefix}001` : '');
+}
+
+function buildBreedCodePrefix(name) {
+    const letters = normalizeBreedName(name).slice(0, 2);
+
+    if (!letters) {
+        return '';
+    }
+
+    return letters.padEnd(2, 'X');
+}
+
+function normalizeBreedName(name) {
+    return String(name)
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-zA-Z]/g, '')
+        .toUpperCase();
 }
 
 function clearValidation() {

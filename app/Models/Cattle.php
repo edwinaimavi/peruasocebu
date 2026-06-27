@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\DecodesTextValues;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -9,7 +10,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Cattle extends Model
 {
-    use SoftDeletes;
+    use DecodesTextValues, SoftDeletes;
 
     protected $table = 'cattle';
 
@@ -18,6 +19,10 @@ class Cattle extends Model
         'mother_id', 'sex', 'birth_date', 'color', 'weight_kg', 'height_cm',
         'ear_tag', 'chip_number', 'purity_percentage', 'status', 'sale_status',
         'main_photo_path', 'is_public', 'observations',
+    ];
+
+    protected array $decodedTextAttributes = [
+        'name', 'color', 'observations',
     ];
 
     protected function casts(): array
@@ -61,9 +66,19 @@ class Cattle extends Model
         return $this->hasMany(self::class, 'father_id');
     }
 
+    public function childrenAsFather(): HasMany
+    {
+        return $this->offspringAsFather();
+    }
+
     public function offspringAsMother(): HasMany
     {
         return $this->hasMany(self::class, 'mother_id');
+    }
+
+    public function childrenAsMother(): HasMany
+    {
+        return $this->offspringAsMother();
     }
 
     public function genealogyLinks(): HasMany

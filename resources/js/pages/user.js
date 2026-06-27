@@ -129,10 +129,10 @@ document.addEventListener("DOMContentLoaded", function () {
         columns: [
             { data: 'DT_RowIndex', name: 'DT_RowIndex' },
             { data: 'id', name: 'id' },
-            { data: 'dni', name: 'dni' },
-            { data: 'name', name: 'name' },
-            { data: 'email', name: 'email' },
-            { data: 'phone', name: 'phone' },
+            { data: 'dni', name: 'dni', render: $.fn.dataTable.render.text() },
+            { data: 'name', name: 'name', render: $.fn.dataTable.render.text() },
+            { data: 'email', name: 'email', render: $.fn.dataTable.render.text() },
+            { data: 'phone', name: 'phone', render: $.fn.dataTable.render.text() },
             { data: 'status', name: 'status', orderable: false, searchable: false },
             { data: 'acciones', name: 'acciones', orderable: false, searchable: false }
         ],       

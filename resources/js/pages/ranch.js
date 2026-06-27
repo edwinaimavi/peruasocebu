@@ -18,12 +18,12 @@ document.addEventListener('DOMContentLoaded', function () {
         columns: [
             { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false },
             { data: 'id', name: 'id' },
-            { data: 'name', name: 'name' },
-            { data: 'business_name', name: 'business_name', defaultContent: '—' },
-            { data: 'document_number', name: 'document_number', defaultContent: '—' },
-            { data: 'phone', name: 'phone', defaultContent: '—' },
-            { data: 'email', name: 'email', defaultContent: '—' },
-            { data: 'representative_name', name: 'representative_name', defaultContent: '—' },
+            { data: 'name', name: 'name', render: $.fn.dataTable.render.text() },
+            { data: 'business_name', name: 'business_name', defaultContent: '—', render: $.fn.dataTable.render.text() },
+            { data: 'document_number', name: 'document_number', defaultContent: '—', render: $.fn.dataTable.render.text() },
+            { data: 'phone', name: 'phone', defaultContent: '—', render: $.fn.dataTable.render.text() },
+            { data: 'email', name: 'email', defaultContent: '—', render: $.fn.dataTable.render.text() },
+            { data: 'representative_name', name: 'representative_name', defaultContent: '—', render: $.fn.dataTable.render.text() },
             { data: 'status', name: 'status', orderable: false, searchable: false },
             { data: 'created_at', name: 'created_at' },
             { data: 'acciones', name: 'acciones', orderable: false, searchable: false }

@@ -31,7 +31,7 @@ beforeEach(function () {
     $this->actingAs($this->user);
 });
 
-it('muestra el módulo de razas', function () {
+it('muestra el modulo de razas', function () {
     $this->get(route('admin.breeds.index'))
         ->assertOk()
         ->assertSee('Razas de Ganado')
@@ -42,7 +42,7 @@ it('muestra el módulo de razas', function () {
 it('devuelve el listado para DataTable', function () {
     Breed::create([
         'name' => 'Brahman',
-        'code' => 'BRH',
+        'code' => 'BR001',
         'origin_country' => 'Estados Unidos',
         'status' => 'active',
     ]);
@@ -56,13 +56,13 @@ it('devuelve el listado para DataTable', function () {
         ->assertJsonPath('recordsTotal', 1)
         ->assertJsonPath('data.0.name', 'Brahman')
         ->assertSee('badge-success', false)
-        ->assertSee('BRH', false);
+        ->assertSee('BR001', false);
 });
 
-it('crea y actualiza una raza normalizando el código', function () {
+it('genera el codigo automaticamente al crear y mantiene el codigo si el nombre no cambia', function () {
     $this->post(route('admin.breeds.store'), [
         'name' => 'Gyr',
-        'code' => 'gyr',
+        'code' => '',
         'origin_country' => 'India',
         'description' => 'Raza lechera cebuina.',
         'characteristics' => 'Rusticidad y aptitud lechera.',
@@ -72,11 +72,11 @@ it('crea y actualiza una raza normalizando el código', function () {
 
     $breed = Breed::firstOrFail();
 
-    expect($breed->code)->toBe('GYR');
+    expect($breed->code)->toBe('GY001');
 
     $this->put(route('admin.breeds.update', $breed), [
-        'name' => 'Gyr Lechero',
-        'code' => 'gyr',
+        'name' => 'Gyr',
+        'code' => 'GY001',
         'origin_country' => 'India',
         'status' => 'inactive',
     ])->assertOk()
@@ -84,15 +84,43 @@ it('crea y actualiza una raza normalizando el código', function () {
 
     $breed->refresh();
 
-    expect($breed->name)->toBe('Gyr Lechero')
-        ->and($breed->code)->toBe('GYR')
+    expect($breed->name)->toBe('Gyr')
+        ->and($breed->code)->toBe('GY001')
         ->and($breed->status)->toBe('inactive');
+});
+
+it('evita codigos repetidos y regenera al cambiar el nombre', function () {
+    Breed::create([
+        'name' => 'Gyr',
+        'code' => 'GY001',
+        'status' => 'active',
+    ]);
+
+    $this->post(route('admin.breeds.store'), [
+        'name' => 'Gyr Lechero',
+        'code' => 'GY001',
+        'status' => 'active',
+    ])->assertOk();
+
+    $newBreed = Breed::where('name', 'Gyr Lechero')->firstOrFail();
+
+    expect($newBreed->code)->toBe('GY002');
+
+    $this->put(route('admin.breeds.update', $newBreed), [
+        'name' => 'Brahman',
+        'code' => 'GY002',
+        'status' => 'active',
+    ])->assertOk();
+
+    $newBreed->refresh();
+
+    expect($newBreed->code)->toBe('BR001');
 });
 
 it('devuelve detalle completo y elimina la raza', function () {
     $breed = Breed::create([
         'name' => 'Nelore',
-        'code' => 'NEL',
+        'code' => 'NE001',
         'origin_country' => 'India',
         'description' => 'Raza de carne.',
         'characteristics' => 'Adaptabilidad tropical.',
@@ -102,7 +130,7 @@ it('devuelve detalle completo y elimina la raza', function () {
     $this->getJson(route('admin.breeds.show', $breed))
         ->assertOk()
         ->assertJsonPath('breed.name', 'Nelore')
-        ->assertJsonPath('breed.code', 'NEL')
+        ->assertJsonPath('breed.code', 'NE001')
         ->assertJsonPath('breed.status_label', 'Activo');
 
     $this->delete(route('admin.breeds.destroy', $breed))
@@ -112,26 +140,25 @@ it('devuelve detalle completo y elimina la raza', function () {
     $this->assertDatabaseMissing('breeds', ['id' => $breed->id]);
 });
 
-it('valida campos obligatorios, código único y formato del código', function () {
+it('valida campos obligatorios y permite generar el codigo aunque el temporal venga repetido', function () {
     Breed::create([
-        'name' => 'Cebú',
-        'code' => 'CEBU',
+        'name' => 'Cebu',
+        'code' => 'CE001',
         'status' => 'active',
     ]);
 
     $this->postJson(route('admin.breeds.store'), [
         'name' => '',
-        'code' => 'CEBU',
+        'code' => 'CE001',
         'status' => '',
     ])->assertUnprocessable()
-        ->assertJsonValidationErrors(['name', 'code', 'status'])
-        ->assertJsonPath('errors.code.0', 'El código de la raza ya está registrado.');
+        ->assertJsonValidationErrors(['name', 'status']);
 
     $this->postJson(route('admin.breeds.store'), [
-        'name' => 'Código inválido',
-        'code' => 'BR H',
+        'name' => 'Cebu Lechero',
+        'code' => 'CE001',
         'status' => 'active',
-    ])->assertUnprocessable()
-        ->assertJsonValidationErrors(['code'])
-        ->assertJsonPath('errors.code.0', 'El código no debe contener espacios ni caracteres especiales.');
+    ])->assertOk();
+
+    expect(Breed::where('name', 'Cebu Lechero')->firstOrFail()->code)->toBe('CE002');
 });

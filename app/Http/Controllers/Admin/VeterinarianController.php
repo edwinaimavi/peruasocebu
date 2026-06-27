@@ -34,15 +34,15 @@ class VeterinarianController extends Controller
             ->addIndexColumn()
             ->editColumn('document_number', function (Veterinarian $veterinarian) {
                 if (! $veterinarian->document_number) {
-                    return '<span class="text-muted">—</span>';
+                    return '—';
                 }
 
-                return e(trim(($this->documentTypeLabel($veterinarian->document_type).' ').$veterinarian->document_number));
+                return trim(($this->documentTypeLabel($veterinarian->document_type).' ').$veterinarian->document_number);
             })
-            ->editColumn('license_number', fn (Veterinarian $veterinarian) => e($veterinarian->license_number ?: '—'))
-            ->editColumn('specialty', fn (Veterinarian $veterinarian) => e($veterinarian->specialty ?: '—'))
-            ->editColumn('phone', fn (Veterinarian $veterinarian) => e($veterinarian->phone ?: '—'))
-            ->editColumn('email', fn (Veterinarian $veterinarian) => e($veterinarian->email ?: '—'))
+            ->editColumn('license_number', fn (Veterinarian $veterinarian) => $veterinarian->license_number ?: '—')
+            ->editColumn('specialty', fn (Veterinarian $veterinarian) => $veterinarian->specialty ?: '—')
+            ->editColumn('phone', fn (Veterinarian $veterinarian) => $veterinarian->phone ?: '—')
+            ->editColumn('email', fn (Veterinarian $veterinarian) => $veterinarian->email ?: '—')
             ->editColumn('status', fn (Veterinarian $veterinarian) => $veterinarian->status === 'active'
                 ? '<span class="badge badge-success">Activo</span>'
                 : '<span class="badge badge-danger">Inactivo</span>')
@@ -51,7 +51,7 @@ class VeterinarianController extends Controller
                 'admin.veterinarians.partials.acciones',
                 compact('veterinarian')
             )->render())
-            ->rawColumns(['document_number', 'status', 'acciones'])
+            ->rawColumns(['full_name', 'document_number', 'license_number', 'specialty', 'phone', 'email', 'status', 'acciones'])
             ->toJson();
     }
 

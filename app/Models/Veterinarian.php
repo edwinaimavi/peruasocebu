@@ -2,18 +2,23 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\DecodesTextValues;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Veterinarian extends Model
 {
-    use SoftDeletes;
+    use DecodesTextValues, SoftDeletes;
 
     protected $fillable = [
         'full_name', 'document_type', 'document_number', 'license_number',
         'specialty', 'phone', 'email', 'address', 'signature_path', 'notes',
         'status',
+    ];
+
+    protected array $decodedTextAttributes = [
+        'full_name', 'specialty', 'address', 'notes',
     ];
 
     public function veterinaryRecords(): HasMany

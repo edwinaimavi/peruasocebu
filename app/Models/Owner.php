@@ -2,17 +2,22 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\DecodesTextValues;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Owner extends Model
 {
-    use SoftDeletes;
+    use DecodesTextValues, SoftDeletes;
 
     protected $fillable = [
         'document_type', 'document_number', 'full_name', 'business_name',
         'phone', 'email', 'address', 'photo_path', 'owner_type', 'notes', 'status',
+    ];
+
+    protected array $decodedTextAttributes = [
+        'full_name', 'business_name', 'address', 'notes',
     ];
 
     public function cattle(): HasMany
@@ -39,4 +44,5 @@ class Owner extends Model
     {
         return $this->hasMany(Certificate::class);
     }
+
 }

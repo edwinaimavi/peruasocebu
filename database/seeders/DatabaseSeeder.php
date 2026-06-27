@@ -21,6 +21,8 @@ class DatabaseSeeder extends Seeder
             OwnerPermissionSeeder::class,
             VeterinarianPermissionSeeder::class,
             BreedPermissionSeeder::class,
+            CattlePermissionSeeder::class,
+            CattleGenealogyPermissionSeeder::class,
         ]);
 
         User::factory()->create([

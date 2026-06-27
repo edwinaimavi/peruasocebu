@@ -20,11 +20,11 @@ document.addEventListener('DOMContentLoaded', function () {
             { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false },
             { data: 'id', name: 'id' },
             { data: 'owner_type', name: 'owner_type' },
-            { data: 'document_number', name: 'document_number', defaultContent: '—' },
-            { data: 'display_name', name: 'full_name' },
-            { data: 'phone', name: 'phone', defaultContent: '—' },
-            { data: 'email', name: 'email', defaultContent: '—' },
-            { data: 'address', name: 'address', defaultContent: '—' },
+            { data: 'document_number', name: 'document_number', defaultContent: '—', render: $.fn.dataTable.render.text() },
+            { data: 'display_name', name: 'full_name', render: $.fn.dataTable.render.text() },
+            { data: 'phone', name: 'phone', defaultContent: '—', render: $.fn.dataTable.render.text() },
+            { data: 'email', name: 'email', defaultContent: '—', render: $.fn.dataTable.render.text() },
+            { data: 'address', name: 'address', defaultContent: '—', render: $.fn.dataTable.render.text() },
             { data: 'status', name: 'status', orderable: false, searchable: false },
             { data: 'created_at', name: 'created_at' },
             { data: 'acciones', name: 'acciones', orderable: false, searchable: false }
@@ -241,7 +241,7 @@ function legacyConsultDocument() {
     const validationMessage = validateDocumentLookup(documentType, documentNumber);
 
     if (validationMessage) {
-        Swal.fire('AtenciÃ³n', validationMessage, 'warning');
+        Swal.fire('Atenci\u00f3n', validationMessage, 'warning');
         return;
     }
 
@@ -277,12 +277,12 @@ function legacyConsultDocument() {
             Swal.close();
 
             if (xhr.status === 422) {
-                Swal.fire('AtenciÃ³n', responseMessage(xhr), 'warning');
+                Swal.fire('Atenci\u00f3n', responseMessage(xhr), 'warning');
                 return;
             }
 
             if (xhr.status === 404) {
-                Swal.fire('Documento no encontrado', 'Documento no encontrado o no vÃ¡lido.', 'warning');
+                Swal.fire('Documento no encontrado', 'Documento no encontrado o no v\u00e1lido.', 'warning');
                 return;
             }
 
@@ -307,23 +307,23 @@ function legacyValidateDocumentLookup(documentType, documentNumber) {
     }
 
     if (!['DNI', 'RUC'].includes(documentType)) {
-        return 'La bÃºsqueda automÃ¡tica solo estÃ¡ disponible para DNI y RUC.';
+        return 'La b\u00fasqueda autom\u00e1tica solo est\u00e1 disponible para DNI y RUC.';
     }
 
     if (!documentNumber) {
-        return 'Ingrese el nÃºmero de documento.';
+        return 'Ingrese el n\u00famero de documento.';
     }
 
     if (!/^\d+$/.test(documentNumber)) {
-        return 'El nÃºmero de documento debe contener solo nÃºmeros.';
+        return 'El n\u00famero de documento debe contener solo n\u00fameros.';
     }
 
     if (documentType === 'DNI' && documentNumber.length !== 8) {
-        return 'El DNI debe tener 8 dÃ­gitos.';
+        return 'El DNI debe tener 8 d\u00edgitos.';
     }
 
     if (documentType === 'RUC' && documentNumber.length !== 11) {
-        return 'El RUC debe tener 11 dÃ­gitos.';
+        return 'El RUC debe tener 11 d\u00edgitos.';
     }
 
     return null;
@@ -377,7 +377,7 @@ function firstValue(data, keys) {
     return '';
 }
 
-function responseMessage(xhr, fallback = 'OcurriÃ³ un error al consultar el documento.') {
+function responseMessage(xhr, fallback = 'Ocurri\u00f3 un error al consultar el documento.') {
     return xhr.responseJSON && xhr.responseJSON.message
         ? xhr.responseJSON.message
         : fallback;

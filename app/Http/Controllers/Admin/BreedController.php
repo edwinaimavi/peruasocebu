@@ -6,7 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Breed;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
+use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use Yajra\DataTables\Facades\DataTables;
 
@@ -32,7 +33,7 @@ class BreedController extends Controller
         return DataTables::eloquent($breeds)
             ->addIndexColumn()
             ->editColumn('code', fn (Breed $breed) => '<span class="badge badge-light border px-2 py-1">'.e($breed->code).'</span>')
-            ->editColumn('origin_country', fn (Breed $breed) => e($breed->origin_country ?: '—'))
+            ->editColumn('origin_country', fn (Breed $breed) => $breed->origin_country ?: '—')
             ->editColumn('status', fn (Breed $breed) => $breed->status === 'active'
                 ? '<span class="badge badge-success">Activo</span>'
                 : '<span class="badge badge-danger">Inactivo</span>')
@@ -41,13 +42,16 @@ class BreedController extends Controller
                 'admin.breeds.partials.acciones',
                 compact('breed')
             )->render())
-            ->rawColumns(['code', 'status', 'acciones'])
+            ->rawColumns(['code', 'name', 'origin_country', 'status', 'acciones'])
             ->toJson();
     }
 
     public function store(Request $request): JsonResponse
     {
-        Breed::create($this->validatedData($request));
+        $data = $this->validatedData($request);
+        $data['code'] = $this->generateBreedCode($data['name']);
+
+        Breed::create($data);
 
         return response()->json([
             'message' => 'Raza registrada correctamente.',
@@ -67,7 +71,15 @@ class BreedController extends Controller
 
     public function update(Request $request, Breed $breed): JsonResponse
     {
-        $breed->update($this->validatedData($request, $breed));
+        $data = $this->validatedData($request, $breed);
+
+        if ($breed->name !== $data['name']) {
+            $data['code'] = $this->generateBreedCode($data['name'], $breed->id);
+        } else {
+            $data['code'] = $breed->code ?: $this->generateBreedCode($data['name'], $breed->id);
+        }
+
+        $breed->update($data);
 
         return response()->json([
             'message' => 'Raza actualizada correctamente.',
@@ -94,11 +106,9 @@ class BreedController extends Controller
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'code' => [
-                'required',
+                'nullable',
                 'string',
                 'max:30',
-                'regex:/^[A-Za-z0-9_-]+$/',
-                Rule::unique('breeds', 'code')->ignore($breed),
             ],
             'description' => ['nullable', 'string'],
             'origin_country' => ['nullable', 'string', 'max:150'],
@@ -114,5 +124,34 @@ class BreedController extends Controller
         ]);
 
         return $data;
+    }
+
+    private function generateBreedCode(string $name, ?int $ignoreId = null): string
+    {
+        $prefix = $this->breedCodePrefix($name);
+
+        for ($number = 1; $number <= 999; $number++) {
+            $code = $prefix.str_pad((string) $number, 3, '0', STR_PAD_LEFT);
+
+            $exists = Breed::query()
+                ->where('code', $code)
+                ->when($ignoreId, fn ($query) => $query->whereKeyNot($ignoreId))
+                ->exists();
+
+            if (! $exists) {
+                return $code;
+            }
+        }
+
+        throw ValidationException::withMessages([
+            'code' => 'No se pudo generar un código disponible para esta raza. Intente con otro nombre.',
+        ]);
+    }
+
+    private function breedCodePrefix(string $name): string
+    {
+        $normalized = preg_replace('/[^A-Z]/', '', strtoupper(Str::ascii($name))) ?? '';
+
+        return str_pad(substr($normalized, 0, 2), 2, 'X');
     }
 }

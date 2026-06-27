@@ -12,6 +12,8 @@ export default defineConfig({
                 'resources/js/pages/ranch.js',
                 'resources/js/pages/veterinarian.js',
                 'resources/js/pages/breed.js',
+                'resources/js/pages/cattle.js',
+                'resources/js/pages/cattle-genealogy.js',
             ],
             refresh: true,
         }),

@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\Admin\BreedController;
+use App\Http\Controllers\Admin\CattleController;
+use App\Http\Controllers\Admin\CattleGenealogyLinkController;
 use App\Http\Controllers\Admin\DocumentLookupController;
 use App\Http\Controllers\Admin\OwnerController;
 use App\Http\Controllers\Admin\RanchController;
@@ -31,3 +33,11 @@ Route::resource('veterinarians', VeterinarianController::class)->except(['create
 
 Route::get('breeds/list', [BreedController::class, 'list'])->name('breeds.list');
 Route::resource('breeds', BreedController::class)->except(['create', 'edit']);
+
+Route::get('cattle/list', [CattleController::class, 'list'])->name('cattle.list');
+Route::resource('cattle', CattleController::class)->except(['create', 'edit']);
+
+Route::get('cattle-genealogy/list', [CattleGenealogyLinkController::class, 'list'])->name('cattle-genealogy.list');
+Route::resource('cattle-genealogy', CattleGenealogyLinkController::class)
+    ->parameters(['cattle-genealogy' => 'cattleGenealogyLink'])
+    ->except(['create', 'edit']);

@@ -144,6 +144,8 @@ return [
         ['text' => 'Propietarios', 'url' => 'admin/owners', 'icon' => 'fas fa-users', 'can' => 'admin.owners.index'],
         ['text' => 'Veterinarios', 'url' => 'admin/veterinarians', 'icon' => 'fas fa-user-md', 'can' => 'admin.veterinarians.index'],
         ['text' => 'Razas', 'url' => 'admin/breeds', 'icon' => 'fas fa-dna', 'can' => 'admin.breeds.index'],
+        ['text' => 'Ganado', 'url' => 'admin/cattle', 'icon' => 'fas fa-paw', 'can' => 'admin.cattle.index'],
+        ['text' => 'Genealogía', 'url' => 'admin/cattle-genealogy', 'icon' => 'fas fa-sitemap', 'can' => 'admin.cattle-genealogy.index'],
         
 
         ['header' => 'CUENTA'],

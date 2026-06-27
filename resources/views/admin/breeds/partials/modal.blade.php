@@ -39,7 +39,11 @@
                                         Código <span class="text-danger">*</span>
                                     </label>
                                     <input class="form-control form-control-sm text-uppercase" id="code"
-                                        name="code" type="text" maxlength="30" required>
+                                        name="code" type="text" maxlength="30"
+                                        placeholder="Se generará automáticamente" readonly>
+                                    <small class="form-text text-muted">
+                                        El código se genera automáticamente según el nombre de la raza.
+                                    </small>
                                     <div class="invalid-feedback" id="code-error"></div>
                                 </div>
                                 <div class="form-group col-md-3">

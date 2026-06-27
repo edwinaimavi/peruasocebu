@@ -37,12 +37,12 @@ class OwnerController extends Controller
                 : '<span class="badge badge-primary">Persona</span>')
             ->editColumn('document_number', function (Owner $owner) {
                 if (! $owner->document_number) {
-                    return '<span class="text-muted">—</span>';
+                    return '—';
                 }
 
-                return e(trim(($this->documentTypeLabel($owner->document_type).' ').$owner->document_number));
+                return trim(($this->documentTypeLabel($owner->document_type).' ').$owner->document_number);
             })
-            ->addColumn('display_name', fn (Owner $owner) => e(
+            ->addColumn('display_name', fn (Owner $owner) => (
                 $owner->owner_type === 'company' && $owner->business_name
                     ? $owner->business_name
                     : $owner->full_name
@@ -55,7 +55,7 @@ class OwnerController extends Controller
                 'admin.owners.partials.acciones',
                 compact('owner')
             )->render())
-            ->rawColumns(['owner_type', 'document_number', 'status', 'acciones'])
+            ->rawColumns(['owner_type', 'document_number', 'display_name', 'phone', 'email', 'address', 'status', 'acciones'])
             ->toJson();
     }
 

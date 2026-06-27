@@ -63,6 +63,32 @@ it('devuelve el listado para DataTable', function () {
         ->assertSee('Empresa', false);
 });
 
+it('normaliza entidades html en nombres de propietarios', function () {
+    $owner = Owner::create([
+        'owner_type' => 'company',
+        'document_type' => 'RUC',
+        'document_number' => '20123456789',
+        'full_name' => 'Contacto &amp;amp; Comercial',
+        'business_name' => 'E &amp;amp; L ENGINEERS S.A.C.',
+        'address' => 'Jr. Angamos Nro 156 &amp;amp; Oficina 2',
+        'status' => 'active',
+    ]);
+
+    $this->getJson(route('admin.owners.list', [
+        'draw' => 1,
+        'start' => 0,
+        'length' => 10,
+    ]))
+        ->assertOk()
+        ->assertJsonPath('data.0.display_name', 'E & L ENGINEERS S.A.C.');
+
+    $this->getJson(route('admin.owners.show', $owner))
+        ->assertOk()
+        ->assertJsonPath('owner.full_name', 'Contacto & Comercial')
+        ->assertJsonPath('owner.business_name', 'E & L ENGINEERS S.A.C.')
+        ->assertJsonPath('owner.address', 'Jr. Angamos Nro 156 & Oficina 2');
+});
+
 it('crea y actualiza un propietario', function () {
     $this->post(route('admin.owners.store'), [
         'owner_type' => 'person',
