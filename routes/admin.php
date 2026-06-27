@@ -1,10 +1,12 @@
 <?php
 
+use App\Http\Controllers\Admin\BreedController;
 use App\Http\Controllers\Admin\DocumentLookupController;
 use App\Http\Controllers\Admin\OwnerController;
 use App\Http\Controllers\Admin\RanchController;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Admin\VeterinarianController;
 use Illuminate\Support\Facades\Route;
 
 // Rutas para la gestión de usuarios en el panel de administración|
@@ -23,3 +25,9 @@ Route::get('documentos/consultar/{numero}', [DocumentLookupController::class, 'c
 
 Route::get('owners/list', [OwnerController::class, 'list'])->name('owners.list');
 Route::resource('owners', OwnerController::class)->except(['create', 'edit']);
+
+Route::get('veterinarians/list', [VeterinarianController::class, 'list'])->name('veterinarians.list');
+Route::resource('veterinarians', VeterinarianController::class)->except(['create', 'edit']);
+
+Route::get('breeds/list', [BreedController::class, 'list'])->name('breeds.list');
+Route::resource('breeds', BreedController::class)->except(['create', 'edit']);

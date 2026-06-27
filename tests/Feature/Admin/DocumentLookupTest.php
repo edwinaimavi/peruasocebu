@@ -76,6 +76,25 @@ it('permite consultar documentos con permiso de propietarios', function () {
         ->assertJsonPath('type', 'DNI');
 });
 
+it('permite consultar documentos con permiso de veterinarios', function () {
+    $veterinarianUser = User::factory()->create();
+    Permission::create(['name' => 'admin.veterinarians.index']);
+    $veterinarianUser->givePermissionTo('admin.veterinarians.index');
+    $this->actingAs($veterinarianUser);
+
+    Http::fake([
+        'api.apis.net.pe/v2/reniec/dni*' => Http::response([
+            'numeroDocumento' => '12345678',
+            'nombreCompleto' => 'JUAN PEREZ ROJAS',
+        ]),
+    ]);
+
+    $this->getJson(route('admin.documents.consult', '12345678'))
+        ->assertOk()
+        ->assertJsonPath('status', true)
+        ->assertJsonPath('type', 'DNI');
+});
+
 it('rechaza documentos con letras o longitud inválida', function (string $number, string $message) {
     Http::fake();
 

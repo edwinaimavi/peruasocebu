@@ -18,6 +18,7 @@ class DocumentLookupController extends Controller
             $allowedPermissions = [
                 'admin.ranches.index',
                 'admin.owners.index',
+                'admin.veterinarians.index',
             ];
 
             foreach ($allowedPermissions as $permission) {

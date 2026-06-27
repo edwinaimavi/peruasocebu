@@ -10,6 +10,8 @@ export default defineConfig({
                 'resources/js/app.js',
                 'resources/js/pages/owner.js',
                 'resources/js/pages/ranch.js',
+                'resources/js/pages/veterinarian.js',
+                'resources/js/pages/breed.js',
             ],
             refresh: true,
         }),
