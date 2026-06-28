@@ -24,4 +24,11 @@ class BlogPost extends Model
     {
         return $this->belongsTo(User::class, 'author_id');
     }
+
+    public function scopePublished($query)
+    {
+        return $query->where('status', 'published')
+            ->whereNotNull('published_at')
+            ->where('published_at', '<=', now());
+    }
 }

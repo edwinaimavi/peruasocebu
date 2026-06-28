@@ -22,6 +22,11 @@
                     @csrf
 
                     <div id="genealogy-error-messages" class="alert alert-danger d-none"></div>
+                    <div class="alert alert-info border-0 shadow-sm mb-3">
+                        <i class="fas fa-info-circle mr-1"></i>
+                        Ejemplo: si Bella Gyr será madre de Romulo, selecciona Romulo como animal principal,
+                        relación Madre y Bella Gyr como familiar.
+                    </div>
 
                     <div class="card border-0 rounded-lg shadow-sm mb-3">
                         <div class="card-body">
@@ -32,7 +37,7 @@
                             <div class="form-row">
                                 <div class="form-group col-md-6">
                                     <label class="small font-weight-bold text-secondary" for="cattle_id">
-                                        Animal principal <span class="text-danger">*</span>
+                                        Animal hijo / animal principal <span class="text-danger">*</span>
                                     </label>
                                     <select class="form-control form-control-sm" id="cattle_id" name="cattle_id" required>
                                         <option value="">Seleccione</option>
@@ -42,6 +47,9 @@
                                             </option>
                                         @endforeach
                                     </select>
+                                    <small class="form-text text-muted">
+                                        Selecciona el animal al que le vas a registrar padre, madre o abuelos.
+                                    </small>
                                     <div class="invalid-feedback" id="cattle_id-error"></div>
                                 </div>
                                 <div class="form-group col-md-3">
@@ -81,17 +89,18 @@
                             </div>
 
                             <div class="form-group mb-0">
-                                <label class="small font-weight-bold text-secondary" for="relative_cattle_id">Familiar en el sistema</label>
+                                <label class="small font-weight-bold text-secondary" for="relative_cattle_id">Familiar que será asignado</label>
                                 <select class="form-control form-control-sm" id="relative_cattle_id" name="relative_cattle_id">
                                     <option value="">Familiar no registrado / ingreso manual</option>
                                     @foreach ($relativeCattle as $animal)
-                                        <option value="{{ $animal->id }}">
+                                        <option value="{{ $animal->id }}" data-sex="{{ $animal->sex }}">
                                             {{ $animal->code }} - {{ $animal->name ?: 'Sin nombre' }} ({{ $animal->sex === 'male' ? 'Macho' : 'Hembra' }})
                                         </option>
                                     @endforeach
                                 </select>
-                                <small class="form-text text-muted">
-                                    Si seleccionas un familiar registrado, sus datos se completarán automáticamente.
+                                <small class="form-text text-muted" id="relative_cattle_id-help">
+                                    Si la relación es Madre, aquí debes seleccionar la hembra que será madre del animal principal.
+                                    Si la relación es Padre, selecciona el macho que será padre.
                                 </small>
                                 <div class="invalid-feedback" id="relative_cattle_id-error"></div>
                             </div>

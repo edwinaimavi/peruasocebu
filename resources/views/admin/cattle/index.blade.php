@@ -117,14 +117,18 @@
         }
 
         .cattle-photo-card {
-            align-items: center;
             background: linear-gradient(180deg, #ffffff 0%, #f7f3ea 100%);
             border: 1.5px dashed #c89b3c;
             border-radius: 16px;
             box-shadow: 0 8px 20px rgba(31, 77, 54, .07);
+            padding: 18px;
+        }
+
+        .cattle-photo-main,
+        .cattle-gallery-upload {
+            align-items: center;
             display: flex;
             gap: 18px;
-            padding: 18px;
         }
 
         .cattle-photo-preview-wrap,
@@ -219,6 +223,56 @@
             color: #795b20;
             font-weight: 700;
             padding: 8px 12px;
+        }
+
+        .cattle-gallery-preview,
+        .cattle-photo-gallery-grid {
+            display: grid;
+            gap: 12px;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            margin-top: 14px;
+        }
+
+        .cattle-gallery-selection-summary {
+            align-items: center;
+            background: #eef6f2;
+            border: 1px solid #d8e7de;
+            border-radius: 12px;
+            color: #1f4d36;
+            display: flex;
+            font-size: .82rem;
+            font-weight: 800;
+            justify-content: center;
+            min-height: 44px;
+            padding: 10px;
+        }
+
+        .cattle-gallery-preview-item,
+        .cattle-gallery-item {
+            background: #fff;
+            border: 1px solid #e4ece8;
+            border-radius: 12px;
+            box-shadow: 0 8px 18px rgba(31, 77, 54, .06);
+            overflow: hidden;
+        }
+
+        .cattle-gallery-preview-item img,
+        .cattle-gallery-item img {
+            aspect-ratio: 4 / 3;
+            display: block;
+            object-fit: cover;
+            width: 100%;
+        }
+
+        .cattle-gallery-item-body {
+            padding: 10px;
+        }
+
+        .cattle-gallery-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 8px;
         }
 
         .cattle-table-photo {
@@ -385,6 +439,11 @@
             grid-column: 1 / -1;
         }
 
+        .badge-orange {
+            background-color: #fd7e14;
+            color: #fff;
+        }
+
         .cattle-genealogy-grid {
             display: grid;
             gap: 16px;
@@ -409,8 +468,13 @@
 
             .cattle-photo-card {
                 align-items: flex-start;
-                flex-direction: column;
                 text-align: center;
+            }
+
+            .cattle-photo-main,
+            .cattle-gallery-upload {
+                align-items: stretch;
+                flex-direction: column;
             }
 
             .cattle-photo-controls {
@@ -487,6 +551,17 @@
         window.cattleRoutes = {
             index: @json(route('admin.cattle.index')),
             list: @json(route('admin.cattle.list')),
+            genealogy: @json(route('admin.cattle-genealogy.index')),
+            ownershipHistories: @json(route('admin.ownership-histories.index')),
+            sales: @json(route('admin.cattle-sales.index')),
+            certificates: @json(route('admin.certificates.index')),
+            veterinaryRecords: @json(route('admin.veterinary-records.index')),
+            vaccinations: @json(route('admin.vaccinations.index')),
+            treatments: @json(route('admin.treatments.index')),
+            weightRecords: @json(route('admin.weight-records.index')),
+            reproductionRecords: @json(route('admin.reproduction-records.index')),
+            photosBase: @json(url('admin/cattle')),
+            photoBase: @json(url('admin/cattle-photos')),
         };
 
         window.cattleBreeds = @json($cattleBreedOptions);

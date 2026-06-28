@@ -22,7 +22,18 @@ class DatabaseSeeder extends Seeder
             VeterinarianPermissionSeeder::class,
             BreedPermissionSeeder::class,
             CattlePermissionSeeder::class,
+            BlogPostPermissionSeeder::class,
+            ContactMessagePermissionSeeder::class,
             CattleGenealogyPermissionSeeder::class,
+            OwnershipHistoryPermissionSeeder::class,
+            CattleSalePermissionSeeder::class,
+            CertificatePermissionSeeder::class,
+            CertificateSignaturePermissionSeeder::class,
+            VeterinaryRecordPermissionSeeder::class,
+            VaccinationPermissionSeeder::class,
+            TreatmentPermissionSeeder::class,
+            WeightRecordPermissionSeeder::class,
+            ReproductionRecordPermissionSeeder::class,
         ]);
 
         User::factory()->create([

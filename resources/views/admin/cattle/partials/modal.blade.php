@@ -30,34 +30,54 @@
                             </div>
 
                             <div class="cattle-photo-card mb-3">
-                                <div class="cattle-photo-preview-wrap">
-                                    <img id="mainPhotoPreview" class="cattle-photo-preview d-none" src=""
-                                        alt="Foto principal del ganado">
-                                    <div id="mainPhotoPlaceholder" class="cattle-photo-placeholder">
-                                        <i class="fas fa-paw"></i>
-                                        <span>Sin foto</span>
+                                <div class="cattle-photo-main">
+                                    <div class="cattle-photo-preview-wrap">
+                                        <img id="mainPhotoPreview" class="cattle-photo-preview d-none" src=""
+                                            alt="Foto principal del ganado">
+                                        <div id="mainPhotoPlaceholder" class="cattle-photo-placeholder">
+                                            <i class="fas fa-camera"></i>
+                                            <span>Sin portada</span>
+                                        </div>
+                                    </div>
+                                    <div class="cattle-photo-controls">
+                                        <div class="cattle-photo-title">
+                                            <i class="fas fa-camera mr-1"></i>
+                                            Foto principal
+                                        </div>
+                                        <div class="cattle-photo-subtitle">Esta imagen se usará como portada del ganado.</div>
+                                        <input class="d-none" id="main_photo" name="main_photo" type="file"
+                                            accept="image/jpeg,image/png,image/webp">
+                                        <div class="cattle-photo-actions">
+                                            <label for="main_photo" class="btn btn-photo-upload mb-0">
+                                                <i class="fas fa-upload mr-1"></i> Seleccionar foto principal
+                                            </label>
+                                            <button class="btn btn-photo-remove d-none" id="btnRemoveCattlePhotoPreview"
+                                                type="button">
+                                                <i class="fas fa-times mr-1"></i> Quitar
+                                            </button>
+                                        </div>
+                                        <div class="cattle-photo-filename" id="mainPhotoFileName">Ningún archivo seleccionado</div>
+                                        <div class="invalid-feedback d-block" id="main_photo-error"></div>
                                     </div>
                                 </div>
-                                <div class="cattle-photo-controls">
-                                    <div class="cattle-photo-title">
-                                        <i class="fas fa-camera mr-1"></i>
-                                        Foto principal del ganado
+
+                                <div class="cattle-gallery-upload mt-3">
+                                    <div>
+                                        <div class="cattle-photo-title">
+                                            <i class="fas fa-images mr-1"></i> Galería adicional
+                                        </div>
+                                        <div class="cattle-photo-subtitle">
+                                            Puedes subir varias fotos del animal. JPG, PNG o WEBP · Máx. 4 MB por imagen.
+                                        </div>
                                     </div>
-                                    <div class="cattle-photo-subtitle">JPG, PNG o WEBP · Máx. 4 MB</div>
-                                    <input class="d-none" id="main_photo" name="main_photo" type="file"
-                                        accept="image/jpeg,image/png,image/webp">
-                                    <div class="cattle-photo-actions">
-                                        <label for="main_photo" class="btn btn-photo-upload mb-0">
-                                            <i class="fas fa-upload mr-1"></i> Seleccionar foto
-                                        </label>
-                                        <button class="btn btn-photo-remove d-none" id="btnRemoveCattlePhotoPreview"
-                                            type="button">
-                                            <i class="fas fa-times mr-1"></i> Quitar
-                                        </button>
-                                    </div>
-                                    <div class="cattle-photo-filename" id="mainPhotoFileName">Ningún archivo seleccionado</div>
-                                    <div class="invalid-feedback d-block" id="main_photo-error"></div>
+                                    <input class="d-none" id="gallery_photos" name="gallery_photos[]" type="file"
+                                        accept="image/jpeg,image/png,image/webp" multiple="multiple">
+                                    <label for="gallery_photos" class="btn btn-photo-upload mb-0" id="btnSelectGalleryPhotos">
+                                        <i class="fas fa-images mr-1"></i> Seleccionar fotos
+                                    </label>
                                 </div>
+                                <div class="cattle-gallery-preview" id="galleryPhotoPreview"></div>
+                                <div class="invalid-feedback d-block" id="gallery_photos-error"></div>
                             </div>
 
                             <div class="form-row">
@@ -241,7 +261,7 @@
                                     <select class="form-control form-control-sm" id="father_id" name="father_id">
                                         <option value="">No registrado</option>
                                         @foreach ($fathers as $father)
-                                            <option value="{{ $father->id }}">
+                                            <option value="{{ $father->id }}" data-sex="{{ $father->sex }}">
                                                 {{ $father->code }} - {{ $father->name ?: 'Sin nombre' }}
                                             </option>
                                         @endforeach
@@ -253,7 +273,7 @@
                                     <select class="form-control form-control-sm" id="mother_id" name="mother_id">
                                         <option value="">No registrado</option>
                                         @foreach ($mothers as $mother)
-                                            <option value="{{ $mother->id }}">
+                                            <option value="{{ $mother->id }}" data-sex="{{ $mother->sex }}">
                                                 {{ $mother->code }} - {{ $mother->name ?: 'Sin nombre' }}
                                             </option>
                                         @endforeach

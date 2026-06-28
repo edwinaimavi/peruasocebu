@@ -303,34 +303,38 @@
                         <span class="eyebrow"><span></span>Actualidad ganadera</span>
                         <h2>Conocimiento para criar mejor</h2>
                     </div>
-                    <a class="text-link" href="#blog">Ver todas las noticias <span>→</span></a>
+                    <a class="text-link" href="{{ route('public.blog.index') }}">Ver todas las noticias <span>→</span></a>
                 </div>
 
-                <div class="news-grid">
-                    @foreach ([
-                        ['Genealogía', 'Importancia del árbol genealógico en el ganado', 'Conocer el origen permite planificar cruces, conservar cualidades y reducir riesgos genéticos.', 'tree'],
-                        ['Genética', 'Cómo verificar la pureza racial', 'Los registros, antecedentes y evaluaciones aportan evidencia para identificar la composición racial.', 'dna'],
-                        ['Tecnología', 'Beneficios de la certificación digital', 'Un certificado verificable facilita la consulta, protege la información y genera mayor confianza.', 'certificate'],
-                    ] as [$category, $title, $excerpt, $icon])
+                @if (($latestPosts ?? collect())->isEmpty())
+                    <article class="news-card">
+                        <div class="news-body">
+                            <span class="category">Noticias</span>
+                            <h3>Próximamente</h3>
+                            <p>Próximamente compartiremos noticias y novedades de nuestro criadero.</p>
+                        </div>
+                    </article>
+                @else
+                    <div class="news-grid">
+                        @foreach ($latestPosts as $post)
                         <article class="news-card">
-                            <div class="news-art {{ $icon }}">
-                                @if ($icon === 'tree')
-                                    <svg viewBox="0 0 320 180" aria-hidden="true"><circle cx="160" cy="38" r="16"/><circle cx="82" cy="132" r="16"/><circle cx="160" cy="132" r="16"/><circle cx="238" cy="132" r="16"/><path d="M160 54v35M82 116V96h156v20M160 89v27"/></svg>
-                                @elseif ($icon === 'dna')
-                                    <svg viewBox="0 0 320 180" aria-hidden="true"><path d="M109 30c75 31 27 90 102 120M211 30c-75 31-27 90-102 120M125 48h70M109 75h102M109 106h102M125 133h70"/></svg>
-                                @else
+                            @if ($post->image_path)
+                                <div class="news-art" style="background-image: url('{{ \Illuminate\Support\Facades\Storage::url($post->image_path) }}'); background-size: cover; background-position: center;"></div>
+                            @else
+                                <div class="news-art certificate">
                                     <svg viewBox="0 0 320 180" aria-hidden="true"><path d="M112 25h96a12 12 0 0 1 12 12v111l-60-20-60 20V37a12 12 0 0 1 12-12Z"/><circle cx="160" cy="74" r="23"/><path d="m148 75 8 8 17-20"/></svg>
-                                @endif
-                            </div>
+                                </div>
+                            @endif
                             <div class="news-body">
-                                <span class="category">{{ $category }}</span>
-                                <h3>{{ $title }}</h3>
-                                <p>{{ $excerpt }}</p>
-                                <a href="#contacto" aria-label="Leer más sobre {{ $title }}">Leer artículo <span>→</span></a>
+                                <span class="category">{{ $post->published_at?->format('d/m/Y') ?: 'Noticias' }}</span>
+                                <h3>{{ $post->title }}</h3>
+                                <p>{{ $post->summary ?: \Illuminate\Support\Str::limit(strip_tags($post->content), 130) }}</p>
+                                <a href="{{ route('public.blog.show', $post->slug) }}" aria-label="Leer más sobre {{ $post->title }}">Leer artículo <span>→</span></a>
                             </div>
                         </article>
-                    @endforeach
-                </div>
+                        @endforeach
+                    </div>
+                @endif
             </div>
         </section>
 
@@ -346,6 +350,43 @@
                     </a>
                 </div>
                 <div class="contact-details">
+                    <form class="public-contact-form" id="publicContactForm" method="POST" action="{{ route('public.contact.store') }}">
+                        @csrf
+                        <input type="text" name="website" autocomplete="off" tabindex="-1" class="contact-honeypot">
+
+                        <div class="contact-form-grid">
+                            <label>
+                                <span>Nombre completo</span>
+                                <input name="full_name" type="text" maxlength="255" required placeholder="Tu nombre">
+                                <small class="contact-error" data-error-for="full_name"></small>
+                            </label>
+                            <label>
+                                <span>Telefono</span>
+                                <input name="phone" type="tel" maxlength="30" placeholder="+51 999 999 999">
+                                <small class="contact-error" data-error-for="phone"></small>
+                            </label>
+                            <label>
+                                <span>Correo</span>
+                                <input name="email" type="email" maxlength="255" placeholder="correo@ejemplo.com">
+                                <small class="contact-error" data-error-for="email"></small>
+                            </label>
+                            <label>
+                                <span>Asunto</span>
+                                <input name="subject" type="text" maxlength="255" placeholder="Consulta sobre registros">
+                                <small class="contact-error" data-error-for="subject"></small>
+                            </label>
+                            <label class="contact-form-wide">
+                                <span>Mensaje</span>
+                                <textarea name="message" maxlength="5000" rows="4" required placeholder="Cuentanos como podemos ayudarte"></textarea>
+                                <small class="contact-error" data-error-for="message"></small>
+                            </label>
+                        </div>
+
+                        <button class="btn btn-gold contact-submit" type="submit">
+                            <span>Enviar mensaje</span>
+                            <span aria-hidden="true">&rarr;</span>
+                        </button>
+                    </form>
                     <div>
                         <span class="contact-icon">
                             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h4l2 5-3 2c1 3 3 5 6 6l2-3 5 2v4c0 2-2 3-4 3C9 21 3 15 3 6c0-2 1-3 3-3Z"/></svg>
@@ -407,9 +448,11 @@
         </div>
     </footer>
 
+    <script src="{{ asset('vendor/sweetalert2/js/sweetalert2@11.js') }}"></script>
     <script>
         const navToggle = document.querySelector('.nav-toggle');
         const mainNav = document.querySelector('.main-nav');
+        const publicContactForm = document.getElementById('publicContactForm');
 
         navToggle?.addEventListener('click', () => {
             const isOpen = navToggle.getAttribute('aria-expanded') === 'true';
@@ -422,6 +465,75 @@
                 navToggle?.setAttribute('aria-expanded', 'false');
                 mainNav?.classList.remove('is-open');
             });
+        });
+
+        publicContactForm?.addEventListener('submit', async (event) => {
+            event.preventDefault();
+
+            const submitButton = publicContactForm.querySelector('.contact-submit');
+            const buttonText = submitButton?.querySelector('span:first-child');
+            const formData = new FormData(publicContactForm);
+
+            publicContactForm.querySelectorAll('.contact-error').forEach((error) => {
+                error.textContent = '';
+            });
+            publicContactForm.querySelectorAll('.is-invalid').forEach((field) => {
+                field.classList.remove('is-invalid');
+            });
+
+            submitButton.disabled = true;
+            if (buttonText) {
+                buttonText.textContent = 'Enviando...';
+            }
+
+            try {
+                const response = await fetch(publicContactForm.action, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+
+                const payload = await response.json();
+
+                if (!response.ok) {
+                    if (response.status === 422 && payload.errors) {
+                        Object.entries(payload.errors).forEach(([field, messages]) => {
+                            const input = publicContactForm.querySelector(`[name="${field}"]`);
+                            const error = publicContactForm.querySelector(`[data-error-for="${field}"]`);
+
+                            input?.classList.add('is-invalid');
+                            if (error) {
+                                error.textContent = messages[0];
+                            }
+                        });
+                    }
+
+                    throw new Error(payload.message || 'No se pudo enviar el mensaje. Revisa los datos e intentalo nuevamente.');
+                }
+
+                publicContactForm.reset();
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Mensaje enviado',
+                    text: payload.message || 'Gracias por contactarnos. Hemos recibido tu mensaje y nos comunicaremos contigo pronto.',
+                    confirmButtonColor: '#1f4d36'
+                });
+            } catch (error) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'No se pudo enviar',
+                    text: error.message || 'No se pudo enviar el mensaje. Revisa los datos e intentalo nuevamente.',
+                    confirmButtonColor: '#1f4d36'
+                });
+            } finally {
+                submitButton.disabled = false;
+                if (buttonText) {
+                    buttonText.textContent = 'Enviar mensaje';
+                }
+            }
         });
     </script>
 </body>

@@ -81,6 +81,9 @@ it('muestra el modulo de genealogia', function () {
         ->assertOk()
         ->assertSee('Genealogía del Ganado')
         ->assertSee('Nuevo Registro Genealógico')
+        ->assertSee('Animal hijo / animal principal')
+        ->assertSee('Familiar que será asignado')
+        ->assertSee('data-sex="male"', false)
         ->assertSee('tableGenealogy');
 });
 
@@ -143,7 +146,7 @@ it('bloquea duplicado principal y conflicto con padre existente al crear genealo
         'generation_level' => 1,
     ])->assertUnprocessable()
         ->assertJsonValidationErrors(['relation_type'])
-        ->assertJsonPath('errors.relation_type.0', 'Este animal ya tiene un padre registrado en genealogia.');
+        ->assertJsonPath('errors.relation_type.0', 'Este animal ya tiene un padre registrado.');
 
     $secondCattle = Cattle::create([
         'code' => 'CE-000004',
@@ -195,7 +198,7 @@ it('permite cambiar padre desde update de genealogia y valida sexo', function ()
         'generation_level' => 1,
     ])->assertUnprocessable()
         ->assertJsonValidationErrors(['relative_cattle_id'])
-        ->assertJsonPath('errors.relative_cattle_id.0', 'El padre seleccionado debe ser un animal macho.');
+        ->assertJsonPath('errors.relative_cattle_id.0', 'El padre debe ser un animal macho.');
 
     $newFather = Cattle::create([
         'code' => 'CE-000004',
@@ -220,6 +223,177 @@ it('permite cambiar padre desde update de genealogia y valida sexo', function ()
     expect($this->mainCattle->father_id)->toBe($newFather->id)
         ->and($link->relative_cattle_id)->toBe($newFather->id)
         ->and($link->relative_name)->toBe('Toro Nuevo');
+});
+
+it('asigna madre registrada y muestra mensaje claro cuando el familiar es macho', function () {
+    $mother = Cattle::create([
+        'code' => 'GY001-000003',
+        'name' => 'Bella Gyr',
+        'breed_id' => $this->breed->id,
+        'ranch_id' => $this->ranch->id,
+        'sex' => 'female',
+        'status' => 'active',
+        'sale_status' => 'not_available',
+    ]);
+
+    $this->postJson(route('admin.cattle-genealogy.store'), [
+        'cattle_id' => $this->mainCattle->id,
+        'relative_cattle_id' => $mother->id,
+        'relation_type' => 'mother',
+        'generation_level' => 1,
+    ])->assertOk()
+        ->assertJson(['message' => 'Registro genealógico guardado correctamente.']);
+
+    $this->mainCattle->refresh();
+    expect($this->mainCattle->mother_id)->toBe($mother->id);
+
+    $this->postJson(route('admin.cattle-genealogy.store'), [
+        'cattle_id' => $mother->id,
+        'relative_cattle_id' => $this->mainCattle->id,
+        'relation_type' => 'mother',
+        'generation_level' => 1,
+    ])->assertUnprocessable()
+        ->assertJsonValidationErrors(['relative_cattle_id'])
+        ->assertJsonPath('errors.relative_cattle_id.0', 'La madre debe ser un animal hembra.');
+});
+
+it('bloquea familiar repetido como padre y abuelo del mismo animal', function () {
+    $grandfather = Cattle::create([
+        'code' => 'CE-000030',
+        'name' => 'Padre Real de Toro Supremo',
+        'breed_id' => $this->breed->id,
+        'ranch_id' => $this->ranch->id,
+        'sex' => 'male',
+        'birth_date' => '2010-01-01',
+        'status' => 'active',
+        'sale_status' => 'not_available',
+    ]);
+
+    $this->father->update(['birth_date' => '2014-01-01']);
+    $this->mainCattle->update([
+        'father_id' => $this->father->id,
+        'birth_date' => '2017-01-01',
+    ]);
+
+    CattleGenealogyLink::create([
+        'cattle_id' => $this->mainCattle->id,
+        'relative_cattle_id' => $this->father->id,
+        'relation_type' => 'father',
+        'generation_level' => 1,
+        'relative_code' => $this->father->code,
+        'relative_name' => $this->father->name,
+    ]);
+
+    $this->postJson(route('admin.cattle-genealogy.store'), [
+        'cattle_id' => $this->mainCattle->id,
+        'relative_cattle_id' => $this->father->id,
+        'relation_type' => 'paternal_grandfather',
+        'generation_level' => 1,
+    ])->assertUnprocessable()
+        ->assertJsonPath('errors.relative_cattle_id.0', 'El padre del animal no puede registrarse también como abuelo paterno.');
+
+    $this->postJson(route('admin.cattle-genealogy.store'), [
+        'cattle_id' => $this->mainCattle->id,
+        'relative_cattle_id' => $grandfather->id,
+        'relation_type' => 'paternal_grandfather',
+        'generation_level' => 1,
+    ])->assertOk();
+
+    $link = CattleGenealogyLink::where('cattle_id', $this->mainCattle->id)
+        ->where('relation_type', 'paternal_grandfather')
+        ->firstOrFail();
+
+    expect($link->relative_cattle_id)->toBe($grandfather->id)
+        ->and($link->generation_level)->toBe(2);
+});
+
+it('bloquea el mismo familiar registrado en otra relacion genealogica', function () {
+    $relative = Cattle::create([
+        'code' => 'CE-000031',
+        'name' => 'Familiar Repetido',
+        'breed_id' => $this->breed->id,
+        'ranch_id' => $this->ranch->id,
+        'sex' => 'male',
+        'birth_date' => '2010-01-01',
+        'status' => 'active',
+        'sale_status' => 'not_available',
+    ]);
+
+    $this->mainCattle->update(['birth_date' => '2017-01-01']);
+
+    CattleGenealogyLink::create([
+        'cattle_id' => $this->mainCattle->id,
+        'relative_cattle_id' => $relative->id,
+        'relation_type' => 'maternal_grandfather',
+        'generation_level' => 2,
+        'relative_code' => $relative->code,
+        'relative_name' => $relative->name,
+    ]);
+
+    $this->postJson(route('admin.cattle-genealogy.store'), [
+        'cattle_id' => $this->mainCattle->id,
+        'relative_cattle_id' => $relative->id,
+        'relation_type' => 'paternal_grandfather',
+        'generation_level' => 2,
+    ])->assertUnprocessable()
+        ->assertJsonPath('errors.relative_cattle_id.0', 'Este familiar ya está registrado en otra relación genealógica para este animal.');
+});
+
+it('valida fecha duplicados y genealogia circular desde genealogia', function () {
+    $youngFather = Cattle::create([
+        'code' => 'CE-000020',
+        'name' => 'Padre Joven',
+        'breed_id' => $this->breed->id,
+        'ranch_id' => $this->ranch->id,
+        'sex' => 'male',
+        'birth_date' => '2019-12-26',
+        'status' => 'active',
+        'sale_status' => 'not_available',
+    ]);
+
+    $this->mainCattle->update(['birth_date' => '2017-10-26']);
+
+    $this->postJson(route('admin.cattle-genealogy.store'), [
+        'cattle_id' => $this->mainCattle->id,
+        'relative_cattle_id' => $youngFather->id,
+        'relation_type' => 'father',
+        'generation_level' => 1,
+    ])->assertUnprocessable()
+        ->assertJsonPath('errors.relative_cattle_id.0', 'La fecha de nacimiento del padre debe ser anterior a la fecha de nacimiento del hijo.');
+
+    $this->postJson(route('admin.cattle-genealogy.store'), [
+        'cattle_id' => $this->mainCattle->id,
+        'relative_cattle_id' => $this->father->id,
+        'relation_type' => 'father',
+        'generation_level' => 1,
+    ])->assertOk();
+
+    $otherFather = Cattle::create([
+        'code' => 'CE-000021',
+        'name' => 'Otro Padre',
+        'breed_id' => $this->breed->id,
+        'ranch_id' => $this->ranch->id,
+        'sex' => 'male',
+        'birth_date' => '2010-01-01',
+        'status' => 'active',
+        'sale_status' => 'not_available',
+    ]);
+
+    $this->postJson(route('admin.cattle-genealogy.store'), [
+        'cattle_id' => $this->mainCattle->id,
+        'relative_cattle_id' => $otherFather->id,
+        'relation_type' => 'father',
+        'generation_level' => 1,
+    ])->assertUnprocessable()
+        ->assertJsonPath('errors.relation_type.0', 'Este animal ya tiene un padre registrado.');
+
+    $this->postJson(route('admin.cattle-genealogy.store'), [
+        'cattle_id' => $this->father->id,
+        'relative_cattle_id' => $this->mainCattle->id,
+        'relation_type' => 'father',
+        'generation_level' => 1,
+    ])->assertUnprocessable()
+        ->assertJsonPath('errors.relative_cattle_id.0', 'No se puede asignar este familiar porque generaría una genealogía circular.');
 });
 
 it('crea, lista, actualiza y elimina un familiar manual', function () {
@@ -311,5 +485,5 @@ it('valida familiar distinto, campos obligatorios y duplicados', function () {
         'generation_level' => 1,
     ])->assertUnprocessable()
         ->assertJsonValidationErrors(['relation_type'])
-        ->assertJsonPath('errors.relation_type.0', 'Este animal ya tiene un padre registrado en genealogia.');
+        ->assertJsonPath('errors.relation_type.0', 'Este animal ya tiene un padre registrado.');
 });

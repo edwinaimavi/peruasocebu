@@ -88,12 +88,22 @@ class Cattle extends Model
 
     public function photos(): HasMany
     {
-        return $this->hasMany(CattlePhoto::class);
+        return $this->hasMany(CattlePhoto::class)->orderBy('sort_order')->orderBy('id');
+    }
+
+    public function mainPhoto()
+    {
+        return $this->hasOne(CattlePhoto::class)->where('is_main', true);
     }
 
     public function ownershipHistories(): HasMany
     {
-        return $this->hasMany(OwnershipHistory::class);
+        return $this->hasMany(OwnershipHistory::class)->orderByDesc('start_date');
+    }
+
+    public function currentOwnership()
+    {
+        return $this->hasOne(OwnershipHistory::class)->where('is_current', true);
     }
 
     public function sales(): HasMany
@@ -103,31 +113,41 @@ class Cattle extends Model
 
     public function veterinaryRecords(): HasMany
     {
-        return $this->hasMany(VeterinaryRecord::class);
+        return $this->hasMany(VeterinaryRecord::class)->orderByDesc('record_date');
     }
 
     public function vaccinations(): HasMany
     {
-        return $this->hasMany(Vaccination::class);
+        return $this->hasMany(Vaccination::class)->orderByDesc('application_date');
     }
 
     public function treatments(): HasMany
     {
-        return $this->hasMany(Treatment::class);
+        return $this->hasMany(Treatment::class)->orderByDesc('treatment_date');
     }
 
     public function weightRecords(): HasMany
     {
-        return $this->hasMany(WeightRecord::class);
+        return $this->hasMany(WeightRecord::class)->orderByDesc('record_date');
     }
 
     public function reproductionRecords(): HasMany
     {
-        return $this->hasMany(ReproductionRecord::class);
+        return $this->hasMany(ReproductionRecord::class)->orderByDesc('reproduction_date');
+    }
+
+    public function reproductionAsPartner(): HasMany
+    {
+        return $this->hasMany(ReproductionRecord::class, 'partner_cattle_id')->orderByDesc('reproduction_date');
+    }
+
+    public function reproductionAsOffspring(): HasMany
+    {
+        return $this->hasMany(ReproductionRecord::class, 'offspring_cattle_id');
     }
 
     public function certificates(): HasMany
     {
-        return $this->hasMany(Certificate::class);
+        return $this->hasMany(Certificate::class)->orderByDesc('issue_date');
     }
 }

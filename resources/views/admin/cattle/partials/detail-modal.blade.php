@@ -118,6 +118,11 @@
                                 <div class="cattle-detail-label">Padre</div>
                                 <div class="cattle-detail-value font-weight-bold" id="detailFather">No registrado</div>
                                 <div class="text-muted small mt-1 cattle-detail-value" id="detailFatherBreed">—</div>
+                                @can('admin.cattle-genealogy.store')
+                                    <a class="btn btn-outline-primary btn-xs mt-3 d-none" id="detailAddFatherLink" href="#">
+                                        <i class="fas fa-plus mr-1"></i> Agregar padre
+                                    </a>
+                                @endcan
                             </div>
                         </div>
                         <div class="card border-0 shadow-sm cattle-genealogy-parent-card">
@@ -125,8 +130,184 @@
                                 <div class="cattle-detail-label">Madre</div>
                                 <div class="cattle-detail-value font-weight-bold" id="detailMother">No registrado</div>
                                 <div class="text-muted small mt-1 cattle-detail-value" id="detailMotherBreed">—</div>
+                                @can('admin.cattle-genealogy.store')
+                                    <a class="btn btn-outline-primary btn-xs mt-3 d-none" id="detailAddMotherLink" href="#">
+                                        <i class="fas fa-plus mr-1"></i> Agregar madre
+                                    </a>
+                                @endcan
                             </div>
                         </div>
+                    </div>
+                </div>
+
+                <div class="cattle-genealogy-card p-3 mt-3">
+                    <div class="d-flex align-items-center justify-content-between flex-wrap mb-3">
+                        <div class="cattle-section-title mb-0">
+                            <i class="fas fa-history"></i> Historial de propietarios
+                        </div>
+                        @can('admin.ownership-histories.store')
+                            <a class="btn btn-outline-primary btn-sm" id="detailAddOwnershipHistoryLink" href="#">
+                                <i class="fas fa-plus mr-1"></i> Agregar historial
+                            </a>
+                        @endcan
+                    </div>
+                    <div id="detailOwnershipHistoryList" class="cattle-detail-grid"></div>
+                    <div id="detailOwnershipHistoryEmpty" class="text-center text-muted py-4 d-none">
+                        <i class="fas fa-user-clock fa-2x mb-2"></i>
+                        <div>Este ganado aun no tiene historial de propietarios registrado.</div>
+                    </div>
+                </div>
+
+                <div class="cattle-gallery-card p-3 mt-3">
+                    <div class="d-flex align-items-center justify-content-between flex-wrap mb-3">
+                        <div class="cattle-section-title mb-0">
+                            <i class="fas fa-handshake"></i> Ventas
+                        </div>
+                        @can('admin.cattle-sales.store')
+                            <a class="btn btn-outline-primary btn-sm" id="detailAddCattleSaleLink" href="#">
+                                <i class="fas fa-plus mr-1"></i> Registrar venta
+                            </a>
+                        @endcan
+                    </div>
+                    <div id="detailCattleSalesList" class="cattle-detail-grid"></div>
+                    <div id="detailCattleSalesEmpty" class="text-center text-muted py-4 d-none">
+                        <i class="fas fa-file-invoice-dollar fa-2x mb-2"></i>
+                        <div>Este ganado aun no tiene ventas registradas.</div>
+                    </div>
+                </div>
+
+                <div class="cattle-gallery-card p-3 mt-3">
+                    <div class="d-flex align-items-center justify-content-between flex-wrap mb-3">
+                        <div class="cattle-section-title mb-0">
+                            <i class="fas fa-certificate"></i> Certificados
+                        </div>
+                        @can('admin.certificates.store')
+                            <a class="btn btn-outline-primary btn-sm" id="detailAddCertificateLink" href="#">
+                                <i class="fas fa-plus mr-1"></i> Nuevo certificado
+                            </a>
+                        @endcan
+                    </div>
+                    <div id="detailCertificatesList" class="cattle-detail-grid"></div>
+                    <div id="detailCertificatesEmpty" class="text-center text-muted py-4 d-none">
+                        <i class="fas fa-certificate fa-2x mb-2"></i>
+                        <div>Este ganado aun no tiene certificados registrados.</div>
+                    </div>
+                </div>
+
+                <div class="cattle-gallery-card p-3 mt-3">
+                    <div class="d-flex align-items-center justify-content-between flex-wrap mb-3">
+                        <div class="cattle-section-title mb-0">
+                            <i class="fas fa-notes-medical"></i> Revisiones veterinarias
+                        </div>
+                        @can('admin.veterinary-records.store')
+                            <a class="btn btn-outline-primary btn-sm" id="detailAddVeterinaryRecordLink" href="#">
+                                <i class="fas fa-plus mr-1"></i> Nueva revision
+                            </a>
+                        @endcan
+                    </div>
+                    <div id="detailVeterinaryRecordsList" class="cattle-detail-grid"></div>
+                    <div id="detailVeterinaryRecordsEmpty" class="text-center text-muted py-4 d-none">
+                        <i class="fas fa-stethoscope fa-2x mb-2"></i>
+                        <div>Este ganado aun no tiene revisiones veterinarias registradas.</div>
+                    </div>
+                </div>
+
+                <div class="cattle-gallery-card p-3 mt-3">
+                    <div class="d-flex align-items-center justify-content-between flex-wrap mb-3">
+                        <div class="cattle-section-title mb-0">
+                            <i class="fas fa-syringe"></i> Vacunas
+                        </div>
+                        @can('admin.vaccinations.store')
+                            <a class="btn btn-outline-primary btn-sm" id="detailAddVaccinationLink" href="#">
+                                <i class="fas fa-plus mr-1"></i> Nueva vacuna
+                            </a>
+                        @endcan
+                    </div>
+                    <div id="detailVaccinationsList" class="cattle-detail-grid"></div>
+                    <div id="detailVaccinationsEmpty" class="text-center text-muted py-4 d-none">
+                        <i class="fas fa-syringe fa-2x mb-2"></i>
+                        <div>Este ganado aun no tiene vacunas registradas.</div>
+                    </div>
+                </div>
+
+                <div class="cattle-gallery-card p-3 mt-3">
+                    <div class="d-flex align-items-center justify-content-between flex-wrap mb-3">
+                        <div class="cattle-section-title mb-0">
+                            <i class="fas fa-pills"></i> Tratamientos medicos
+                        </div>
+                        @can('admin.treatments.store')
+                            <a class="btn btn-outline-primary btn-sm" id="detailAddTreatmentLink" href="#">
+                                <i class="fas fa-plus mr-1"></i> Nuevo tratamiento
+                            </a>
+                        @endcan
+                    </div>
+                    <div id="detailTreatmentsList" class="cattle-detail-grid"></div>
+                    <div id="detailTreatmentsEmpty" class="text-center text-muted py-4 d-none">
+                        <i class="fas fa-pills fa-2x mb-2"></i>
+                        <div>Este ganado aun no tiene tratamientos medicos registrados.</div>
+                    </div>
+                </div>
+
+                <div class="cattle-gallery-card p-3 mt-3">
+                    <div class="d-flex align-items-center justify-content-between flex-wrap mb-3">
+                        <div class="cattle-section-title mb-0">
+                            <i class="fas fa-weight"></i> Historial de pesajes
+                        </div>
+                        @can('admin.weight-records.store')
+                            <a class="btn btn-outline-primary btn-sm" id="detailAddWeightRecordLink" href="#">
+                                <i class="fas fa-plus mr-1"></i> Nuevo pesaje
+                            </a>
+                        @endcan
+                    </div>
+                    <div id="detailLatestWeightSummary" class="alert alert-success py-2 px-3 d-none"></div>
+                    <div id="detailWeightRecordsList" class="cattle-detail-grid"></div>
+                    <div id="detailWeightRecordsEmpty" class="text-center text-muted py-4 d-none">
+                        <i class="fas fa-balance-scale fa-2x mb-2"></i>
+                        <div>Este ganado aun no tiene pesajes registrados.</div>
+                    </div>
+                </div>
+
+                <div class="cattle-gallery-card p-3 mt-3">
+                    <div class="d-flex align-items-center justify-content-between flex-wrap mb-3">
+                        <div class="cattle-section-title mb-0">
+                            <i class="fas fa-venus-mars"></i> Historial reproductivo
+                        </div>
+                        @can('admin.reproduction-records.store')
+                            <a class="btn btn-outline-primary btn-sm" id="detailAddReproductionRecordLink" href="#">
+                                <i class="fas fa-plus mr-1"></i> Nuevo registro reproductivo
+                            </a>
+                        @endcan
+                    </div>
+                    <div id="detailReproductionRecordsList" class="cattle-detail-grid"></div>
+                    <div id="detailReproductionRecordsEmpty" class="text-center text-muted py-4 d-none">
+                        <i class="fas fa-venus-mars fa-2x mb-2"></i>
+                        <div>Este ganado aun no tiene registros reproductivos.</div>
+                    </div>
+
+                    <div class="cattle-section-title mt-3 mb-3">
+                        <i class="fas fa-mars"></i> Participaciones como reproductor
+                    </div>
+                    <div id="detailReproductionPartnerList" class="cattle-detail-grid"></div>
+                    <div id="detailReproductionPartnerEmpty" class="text-center text-muted py-3 d-none">
+                        <div>No registra participaciones como reproductor.</div>
+                    </div>
+                </div>
+
+                <div class="cattle-gallery-card p-3 mt-3">
+                    <div class="d-flex align-items-center justify-content-between flex-wrap mb-3">
+                        <div class="cattle-section-title mb-0">
+                            <i class="fas fa-images"></i> Galería de fotos
+                        </div>
+                        @can('admin.cattle.update')
+                            <button type="button" class="btn btn-outline-primary btn-sm" id="btnOpenAddCattlePhoto">
+                                <i class="fas fa-plus mr-1"></i> Agregar foto
+                            </button>
+                        @endcan
+                    </div>
+                    <div id="cattlePhotoGallery" class="cattle-photo-gallery-grid"></div>
+                    <div id="cattlePhotoGalleryEmpty" class="text-center text-muted py-4 d-none">
+                        <i class="fas fa-camera fa-2x mb-2"></i>
+                        <div>Este ganado aún no tiene fotos registradas.</div>
                     </div>
                 </div>
             </div>
@@ -135,6 +316,77 @@
                 <button type="button" class="btn btn-light border" data-dismiss="modal">
                     <i class="fas fa-times mr-1"></i> Cerrar
                 </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="cattlePhotoFormModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+        <div class="modal-content shadow-lg border-0 rounded-lg overflow-hidden">
+            <div class="modal-header">
+                <h5 class="modal-title" id="cattlePhotoFormTitle">Agregar foto</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form id="cattlePhotoForm" enctype="multipart/form-data">
+                @csrf
+                <div class="modal-body">
+                    <div id="cattle-photo-error-messages" class="alert alert-danger d-none"></div>
+                    <div class="form-group">
+                        <label class="small font-weight-bold text-secondary" for="photo_image">Imagen</label>
+                        <input class="form-control-file" id="photo_image" name="image" type="file"
+                            accept="image/jpeg,image/png,image/webp">
+                        <div class="invalid-feedback d-block" id="image-error"></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group col-md-8">
+                            <label class="small font-weight-bold text-secondary" for="photo_title">Título</label>
+                            <input class="form-control form-control-sm" id="photo_title" name="title" type="text" maxlength="255">
+                        </div>
+                        <div class="form-group col-md-4">
+                            <label class="small font-weight-bold text-secondary" for="photo_sort_order">Orden</label>
+                            <input class="form-control form-control-sm" id="photo_sort_order" name="sort_order" type="number" min="0">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="small font-weight-bold text-secondary" for="photo_description">Descripción</label>
+                        <textarea class="form-control form-control-sm" id="photo_description" name="description" rows="3"></textarea>
+                    </div>
+                    <div class="custom-control custom-switch">
+                        <input class="custom-control-input" id="photo_is_main" name="is_main" type="checkbox" value="1">
+                        <label class="custom-control-label small font-weight-bold text-secondary" for="photo_is_main">
+                            Marcar como principal
+                        </label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light border" data-dismiss="modal">Cerrar</button>
+                    <button type="submit" class="btn btn-primary" id="saveCattlePhotoButton">
+                        <i class="fas fa-save mr-1"></i> Guardar foto
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="cattlePhotoViewModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
+        <div class="modal-content shadow-lg border-0 rounded-lg overflow-hidden">
+            <div class="modal-header">
+                <h5 class="modal-title" id="photoViewTitle">Foto del ganado</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <img id="photoViewImage" class="img-fluid rounded w-100" src="" alt="Foto del ganado">
+                <div class="mt-3">
+                    <span id="photoViewMainBadge"></span>
+                    <p class="text-muted mb-0" id="photoViewDescription"></p>
+                </div>
             </div>
         </div>
     </div>

@@ -44,6 +44,6 @@ class Certificate extends Model
 
     public function signatures(): HasMany
     {
-        return $this->hasMany(CertificateSignature::class);
+        return $this->hasMany(CertificateSignature::class)->latest('id');
     }
 }

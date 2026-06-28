@@ -156,6 +156,103 @@ body {
     padding: .75rem .65rem 1rem;
 }
 
+.brand-link {
+    display: block !important;
+    min-height: 64px;
+    max-width: 100%;
+    padding: 10px 12px !important;
+    overflow: hidden;
+    background: #ffffff !important;
+    border-bottom: 1px solid rgba(18, 53, 36, .08) !important;
+    box-shadow: 0 8px 18px rgba(18, 53, 36, .08);
+}
+
+.brand-link::after {
+    display: none !important;
+}
+
+.brand-link .admin-brand-emblem {
+    width: 34px !important;
+    height: 34px !important;
+    min-width: 34px;
+    margin: 0 10px 0 0 !important;
+    object-fit: contain;
+    background: #f7f3ea;
+    border: 1px solid rgba(200, 155, 60, .45);
+    border-radius: 50%;
+    box-shadow: none !important;
+    opacity: 1 !important;
+}
+
+.brand-link .brand-text {
+    display: inline-flex !important;
+    max-width: calc(100% - 48px);
+    min-width: 0;
+    height: 34px;
+    flex-direction: column;
+    justify-content: center;
+    margin: 0 !important;
+    overflow: hidden;
+    color: inherit !important;
+    line-height: 1.05;
+    vertical-align: middle;
+    white-space: normal;
+}
+
+.brand-link .brand-text::after {
+    content: none !important;
+    display: none !important;
+}
+
+.admin-brand-copy {
+    display: flex;
+    min-width: 0;
+    max-width: 100%;
+    flex-direction: column;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.admin-brand-copy strong,
+.admin-brand-copy small {
+    display: block;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.admin-brand-copy strong {
+    color: #123524;
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: 1px;
+    line-height: 1.05;
+}
+
+.admin-brand-copy small {
+    margin-top: 3px;
+    color: #c89b3c;
+    font-size: 8px;
+    font-weight: 800;
+    letter-spacing: 1px;
+    line-height: 1.05;
+}
+
+.sidebar-collapse .brand-link {
+    padding-right: 8px !important;
+    padding-left: 8px !important;
+}
+
+.sidebar-collapse .brand-link .admin-brand-emblem {
+    margin-right: 0 !important;
+}
+
+.sidebar-collapse .brand-link .brand-text {
+    display: none !important;
+}
+
 .nav-sidebar .nav-header {
     padding: 1.15rem .85rem .45rem;
     color: rgba(255, 255, 255, .42);

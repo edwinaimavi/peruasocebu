@@ -27,6 +27,24 @@ class CattleGenealogyLinkController extends Controller
         'maternal_grandmother',
     ];
 
+    private const RELATION_REQUIRED_SEX = [
+        'father' => 'male',
+        'mother' => 'female',
+        'paternal_grandfather' => 'male',
+        'paternal_grandmother' => 'female',
+        'maternal_grandfather' => 'male',
+        'maternal_grandmother' => 'female',
+    ];
+
+    private const GENERATION_BY_RELATION = [
+        'father' => 1,
+        'mother' => 1,
+        'paternal_grandfather' => 2,
+        'paternal_grandmother' => 2,
+        'maternal_grandfather' => 2,
+        'maternal_grandmother' => 2,
+    ];
+
     public function __construct()
     {
         $this->middleware('can:admin.cattle-genealogy.index')->only('index', 'list', 'show');
@@ -79,9 +97,15 @@ class CattleGenealogyLinkController extends Controller
     public function store(Request $request): JsonResponse
     {
         $data = $this->validatedData($request);
+        $data = $this->normalizeGenerationLevel($data);
         $this->ensureRelativeCattleCanBeParent($data);
+        $this->ensureRelativeDoesNotCreateCircularGenealogy($data);
+        $this->ensureDirectParentIsNotGrandparent($data);
+        $this->ensureRelativeBirthDateIsValid($data);
         $data = $this->syncRelativeData($data);
         $this->ensureUniqueGenealogyLink($data);
+        $this->ensureSameRelativeIsNotRepeated($data);
+        $this->ensureSameRelativeIsNotFatherAndMother($data);
         $this->ensureCattleParentCanBeSynced($data);
 
         DB::transaction(function () use ($data): void {
@@ -130,9 +154,15 @@ class CattleGenealogyLinkController extends Controller
     public function update(Request $request, CattleGenealogyLink $cattleGenealogyLink): JsonResponse
     {
         $data = $this->validatedData($request, $cattleGenealogyLink);
+        $data = $this->normalizeGenerationLevel($data);
         $this->ensureRelativeCattleCanBeParent($data);
+        $this->ensureRelativeDoesNotCreateCircularGenealogy($data);
+        $this->ensureDirectParentIsNotGrandparent($data);
+        $this->ensureRelativeBirthDateIsValid($data);
         $data = $this->syncRelativeData($data);
         $this->ensureUniqueGenealogyLink($data, $cattleGenealogyLink->id);
+        $this->ensureSameRelativeIsNotRepeated($data, $cattleGenealogyLink->id);
+        $this->ensureSameRelativeIsNotFatherAndMother($data, $cattleGenealogyLink->id);
 
         $previous = [
             'cattle_id' => $cattleGenealogyLink->cattle_id,
@@ -195,6 +225,15 @@ class CattleGenealogyLinkController extends Controller
         ]);
     }
 
+    private function normalizeGenerationLevel(array $data): array
+    {
+        if (isset(self::GENERATION_BY_RELATION[$data['relation_type']])) {
+            $data['generation_level'] = self::GENERATION_BY_RELATION[$data['relation_type']];
+        }
+
+        return $data;
+    }
+
     private function syncRelativeData(array $data): array
     {
         if (! empty($data['relative_cattle_id'])) {
@@ -213,7 +252,9 @@ class CattleGenealogyLinkController extends Controller
 
     private function ensureRelativeCattleCanBeParent(array $data): void
     {
-        if (empty($data['relative_cattle_id']) || ! in_array($data['relation_type'] ?? null, ['father', 'mother'], true)) {
+        $requiredSex = self::RELATION_REQUIRED_SEX[$data['relation_type'] ?? ''] ?? null;
+
+        if (empty($data['relative_cattle_id']) || ! $requiredSex) {
             return;
         }
 
@@ -223,54 +264,265 @@ class CattleGenealogyLinkController extends Controller
             return;
         }
 
-        if ($data['relation_type'] === 'father' && $relative->sex !== 'male') {
+        if ($relative->sex !== $requiredSex) {
             throw ValidationException::withMessages([
-                'relative_cattle_id' => 'El padre seleccionado debe ser un animal macho.',
-            ]);
-        }
-
-        if ($data['relation_type'] === 'mother' && $relative->sex !== 'female') {
-            throw ValidationException::withMessages([
-                'relative_cattle_id' => 'La madre seleccionada debe ser un animal hembra.',
+                'relative_cattle_id' => $this->relativeSexValidationMessage($data['relation_type'], $relative->sex),
             ]);
         }
     }
 
-    private function ensureUniqueGenealogyLink(array $data, ?int $ignoreId = null): void
+    private function relativeSexValidationMessage(string $relationType, string $selectedSex): string
     {
-        if (in_array($data['relation_type'], ['father', 'mother'], true)) {
-            $exists = CattleGenealogyLink::query()
-                ->where('cattle_id', $data['cattle_id'])
-                ->where('relation_type', $data['relation_type'])
-                ->when($ignoreId, fn ($query) => $query->whereKeyNot($ignoreId))
-                ->exists();
+        if ($relationType === 'father') {
+            return 'El padre debe ser un animal macho.';
+        }
 
-            if ($exists) {
-                throw ValidationException::withMessages([
-                    'relation_type' => $data['relation_type'] === 'father'
-                        ? 'Este animal ya tiene un padre registrado en genealogia.'
-                        : 'Este animal ya tiene una madre registrada en genealogia.',
-                ]);
-            }
+        if ($relationType === 'mother') {
+            return 'La madre debe ser un animal hembra.';
+        }
 
+        if (str_contains($relationType, 'grandfather')) {
+            return 'El abuelo debe ser un animal macho.';
+        }
+
+        if (str_contains($relationType, 'grandmother')) {
+            return 'La abuela debe ser un animal hembra.';
+        }
+
+        return 'El sexo del familiar no corresponde a la relación seleccionada.';
+    }
+
+    private function ensureRelativeBirthDateIsValid(array $data): void
+    {
+        if (empty($data['relative_cattle_id'])) {
             return;
         }
 
-        $query = CattleGenealogyLink::query()
-            ->where('cattle_id', $data['cattle_id'])
-            ->where('relation_type', $data['relation_type'])
-            ->when($ignoreId, fn ($query) => $query->whereKeyNot($ignoreId));
+        $cattle = Cattle::find($data['cattle_id']);
+        $relative = Cattle::find($data['relative_cattle_id']);
 
-        if (! empty($data['relative_cattle_id'])) {
-            $query->where('relative_cattle_id', $data['relative_cattle_id']);
-        } else {
-            $query->whereNull('relative_cattle_id')
-                ->whereRaw('LOWER(relative_name) = ?', [strtolower(trim((string) ($data['relative_name'] ?? '')))]);
+        if (! $cattle?->birth_date || ! $relative?->birth_date) {
+            return;
         }
 
-        if ($query->exists()) {
+        if ($relative->birth_date->lessThan($cattle->birth_date)) {
+            $this->ensureGrandparentBirthDateIsBeforeParent($data, $relative);
+            return;
+        }
+
+        throw ValidationException::withMessages([
+            'relative_cattle_id' => $this->relativeBirthDateMessage($data['relation_type']),
+        ]);
+    }
+
+    private function ensureGrandparentBirthDateIsBeforeParent(array $data, Cattle $relative): void
+    {
+        $parentId = match ($data['relation_type']) {
+            'paternal_grandfather', 'paternal_grandmother' => Cattle::find($data['cattle_id'])?->father_id,
+            'maternal_grandfather', 'maternal_grandmother' => Cattle::find($data['cattle_id'])?->mother_id,
+            default => null,
+        };
+
+        if (! $parentId) {
+            return;
+        }
+
+        $parent = Cattle::find($parentId);
+
+        if (! $parent?->birth_date || ! $relative->birth_date) {
+            return;
+        }
+
+        if ($relative->birth_date->lessThan($parent->birth_date)) {
+            return;
+        }
+
+        throw ValidationException::withMessages([
+            'relative_cattle_id' => 'La fecha de nacimiento del familiar debe ser anterior a la fecha de nacimiento del animal principal.',
+        ]);
+    }
+
+    private function relativeBirthDateMessage(string $relationType): string
+    {
+        return match ($relationType) {
+            'father' => 'La fecha de nacimiento del padre debe ser anterior a la fecha de nacimiento del hijo.',
+            'mother' => 'La fecha de nacimiento de la madre debe ser anterior a la fecha de nacimiento del hijo.',
+            default => 'La fecha de nacimiento del familiar debe ser anterior a la fecha de nacimiento del animal principal.',
+        };
+    }
+
+    private function ensureRelativeDoesNotCreateCircularGenealogy(array $data): void
+    {
+        if (
+            empty($data['relative_cattle_id'])
+            || ! in_array($data['relation_type'], self::RELATION_TYPES, true)
+        ) {
+            return;
+        }
+
+        if ($this->isDescendantOf((int) $data['relative_cattle_id'], (int) $data['cattle_id'])) {
             throw ValidationException::withMessages([
-                'relative_cattle_id' => 'Ya existe esta relación genealógica para el animal principal.',
+                'relative_cattle_id' => 'No se puede asignar este familiar porque generaría una genealogía circular.',
+            ]);
+        }
+    }
+
+    private function isDescendantOf(int $possibleDescendantId, int $possibleAncestorId, array $visited = []): bool
+    {
+        if ($possibleDescendantId === $possibleAncestorId) {
+            return true;
+        }
+
+        if (in_array($possibleDescendantId, $visited, true)) {
+            return false;
+        }
+
+        $visited[] = $possibleDescendantId;
+
+        $animal = Cattle::find($possibleDescendantId);
+        $ancestorIds = collect([$animal?->father_id, $animal?->mother_id])
+            ->merge(
+                CattleGenealogyLink::query()
+                    ->where('cattle_id', $possibleDescendantId)
+                    ->whereIn('relation_type', ['father', 'mother'])
+                    ->pluck('relative_cattle_id')
+            )
+            ->filter()
+            ->unique()
+            ->values();
+
+        foreach ($ancestorIds as $ancestorId) {
+            if ($this->isDescendantOf((int) $ancestorId, $possibleAncestorId, $visited)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function ensureUniqueGenealogyLink(array $data, ?int $ignoreId = null): void
+    {
+        $exists = CattleGenealogyLink::query()
+            ->where('cattle_id', $data['cattle_id'])
+            ->where('relation_type', $data['relation_type'])
+            ->when($ignoreId, fn ($query) => $query->whereKeyNot($ignoreId))
+            ->exists();
+
+        if ($exists) {
+            throw ValidationException::withMessages([
+                'relation_type' => $this->duplicateRelationMessage($data['relation_type']),
+            ]);
+        }
+    }
+
+    private function duplicateRelationMessage(string $relationType): string
+    {
+        return match ($relationType) {
+            'father' => 'Este animal ya tiene un padre registrado.',
+            'mother' => 'Este animal ya tiene una madre registrada.',
+            'paternal_grandfather' => 'Este animal ya tiene un abuelo paterno registrado.',
+            'paternal_grandmother' => 'Este animal ya tiene una abuela paterna registrada.',
+            'maternal_grandfather' => 'Este animal ya tiene un abuelo materno registrado.',
+            'maternal_grandmother' => 'Este animal ya tiene una abuela materna registrada.',
+            default => 'Este animal ya tiene esta relación registrada.',
+        };
+    }
+
+    private function ensureSameRelativeIsNotRepeated(array $data, ?int $ignoreId = null): void
+    {
+        if (empty($data['relative_cattle_id'])) {
+            return;
+        }
+
+        $exists = CattleGenealogyLink::query()
+            ->where('cattle_id', $data['cattle_id'])
+            ->where('relative_cattle_id', $data['relative_cattle_id'])
+            ->when($ignoreId, fn ($query) => $query->whereKeyNot($ignoreId))
+            ->exists();
+
+        if ($exists) {
+            throw ValidationException::withMessages([
+                'relative_cattle_id' => 'Este familiar ya está registrado en otra relación genealógica para este animal.',
+            ]);
+        }
+    }
+
+    private function ensureDirectParentIsNotGrandparent(array $data): void
+    {
+        if (
+            empty($data['relative_cattle_id'])
+            || ! in_array($data['relation_type'], [
+                'paternal_grandfather',
+                'paternal_grandmother',
+                'maternal_grandfather',
+                'maternal_grandmother',
+            ], true)
+        ) {
+            return;
+        }
+
+        $cattle = Cattle::find($data['cattle_id']);
+
+        if (! $cattle) {
+            return;
+        }
+
+        if (
+            in_array($data['relation_type'], ['paternal_grandfather', 'paternal_grandmother'], true)
+            && (int) $cattle->father_id === (int) $data['relative_cattle_id']
+        ) {
+            throw ValidationException::withMessages([
+                'relative_cattle_id' => 'El padre del animal no puede registrarse también como abuelo paterno.',
+            ]);
+        }
+
+        if (
+            in_array($data['relation_type'], ['maternal_grandfather', 'maternal_grandmother'], true)
+            && (int) $cattle->mother_id === (int) $data['relative_cattle_id']
+        ) {
+            throw ValidationException::withMessages([
+                'relative_cattle_id' => 'La madre del animal no puede registrarse también como abuela materna.',
+            ]);
+        }
+
+        if (
+            in_array((int) $data['relative_cattle_id'], array_filter([
+                (int) ($cattle->father_id ?? 0),
+                (int) ($cattle->mother_id ?? 0),
+            ]), true)
+        ) {
+            throw ValidationException::withMessages([
+                'relative_cattle_id' => 'Un padre o madre directo no puede registrarse como abuelo o abuela del mismo animal.',
+            ]);
+        }
+    }
+
+    private function ensureSameRelativeIsNotFatherAndMother(array $data, ?int $ignoreId = null): void
+    {
+        if (
+            empty($data['relative_cattle_id'])
+            || ! in_array($data['relation_type'], ['father', 'mother'], true)
+        ) {
+            return;
+        }
+
+        $oppositeRelation = $data['relation_type'] === 'father' ? 'mother' : 'father';
+
+        $exists = CattleGenealogyLink::query()
+            ->where('cattle_id', $data['cattle_id'])
+            ->where('relative_cattle_id', $data['relative_cattle_id'])
+            ->where('relation_type', $oppositeRelation)
+            ->when($ignoreId, fn ($query) => $query->whereKeyNot($ignoreId))
+            ->exists();
+
+        $cattle = Cattle::find($data['cattle_id']);
+        $sameAsDirectParent = $data['relation_type'] === 'father'
+            ? (int) ($cattle?->mother_id ?? 0) === (int) $data['relative_cattle_id']
+            : (int) ($cattle?->father_id ?? 0) === (int) $data['relative_cattle_id'];
+
+        if ($exists || $sameAsDirectParent) {
+            throw ValidationException::withMessages([
+                'relative_cattle_id' => 'El mismo animal no puede ser registrado como padre y madre.',
             ]);
         }
     }
@@ -368,6 +620,8 @@ class CattleGenealogyLinkController extends Controller
             'code' => $cattle->code,
             'name' => $cattle->name,
             'sex' => $cattle->sex,
+            'father_id' => $cattle->father_id,
+            'mother_id' => $cattle->mother_id,
             'breed_id' => $cattle->breed_id,
             'breed_name' => $cattle->breed?->name,
             'purity_percentage' => $cattle->purity_percentage,

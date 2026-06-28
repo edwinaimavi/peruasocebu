@@ -1193,6 +1193,83 @@ svg {
 }
 
 .contact-details > div {
+    display: none;
+}
+
+.public-contact-form {
+    grid-column: 1 / -1;
+    width: 100%;
+}
+
+.contact-honeypot {
+    display: none;
+}
+
+.contact-form-grid {
+    display: grid;
+    gap: 14px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.public-contact-form label {
+    display: grid;
+    gap: 6px;
+    margin: 0;
+}
+
+.public-contact-form label > span {
+    color: rgba(255,255,255,.7);
+    font-size: .72rem;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
+.public-contact-form input,
+.public-contact-form textarea {
+    width: 100%;
+    border: 1px solid rgba(255,255,255,.18);
+    border-radius: 12px;
+    padding: 12px 13px;
+    color: var(--white);
+    background: rgba(255,255,255,.08);
+    outline: none;
+}
+
+.public-contact-form input::placeholder,
+.public-contact-form textarea::placeholder {
+    color: rgba(255,255,255,.42);
+}
+
+.public-contact-form input:focus,
+.public-contact-form textarea:focus {
+    border-color: var(--gold-300);
+    box-shadow: 0 0 0 3px rgba(223,193,132,.16);
+}
+
+.public-contact-form .is-invalid {
+    border-color: #ffb3b3;
+}
+
+.contact-form-wide {
+    grid-column: 1 / -1;
+}
+
+.contact-error {
+    min-height: 16px;
+    color: #ffd1d1;
+    font-size: .76rem;
+}
+
+.contact-submit {
+    margin-top: 16px;
+}
+
+.contact-submit:disabled {
+    cursor: wait;
+    opacity: .72;
+}
+
+.contact-details > div {
     display: flex;
     align-items: center;
     gap: 13px;
@@ -1230,6 +1307,10 @@ svg {
     stroke-width: 1.7;
     stroke-linecap: round;
     stroke-linejoin: round;
+}
+
+.contact-details > div {
+    display: none;
 }
 
 .site-footer {

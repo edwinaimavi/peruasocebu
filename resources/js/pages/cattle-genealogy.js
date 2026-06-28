@@ -11,6 +11,24 @@ const generationByRelation = {
     maternal_grandmother: '2'
 };
 
+const sexByRelation = {
+    father: 'male',
+    mother: 'female',
+    paternal_grandfather: 'male',
+    paternal_grandmother: 'female',
+    maternal_grandfather: 'male',
+    maternal_grandmother: 'female'
+};
+
+const relationSexHelp = {
+    father: 'Para padre solo se permiten animales machos.',
+    mother: 'Para madre solo se permiten animales hembras.',
+    paternal_grandfather: 'Debe seleccionar al padre del padre del animal principal. No seleccione al padre directo.',
+    paternal_grandmother: 'Debe seleccionar a la madre del padre del animal principal.',
+    maternal_grandfather: 'Debe seleccionar al padre de la madre del animal principal.',
+    maternal_grandmother: 'Debe seleccionar a la madre de la madre del animal principal.'
+};
+
 document.addEventListener('DOMContentLoaded', function () {
     $.ajaxSetup({
         headers: {
@@ -71,7 +89,11 @@ document.addEventListener('DOMContentLoaded', function () {
         drawCallback: hideLoading
     });
 
-    $('#relation_type').on('change', syncGenerationLevel);
+    $('#relation_type').on('change', function () {
+        syncGenerationLevel();
+        filterRelativeCattle();
+    });
+    $('#cattle_id').on('change', filterRelativeCattle);
     $('#relative_cattle_id').on('change', fillRelativeData);
 
     $('#genealogyForm').on('submit', function (event) {
@@ -81,8 +103,13 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
 
-        genealogySubmitting = true;
         clearValidation();
+
+        if (!validateGenealogyFormBeforeSubmit()) {
+            return;
+        }
+
+        genealogySubmitting = true;
         setSaveButtonLoading(true);
         showLoading();
 
@@ -188,7 +215,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     $('#genealogyModal').on('show.bs.modal', function () {
-        if (!$('#genealogyForm').attr('data-id')) {
+        if (!$('#genealogyForm').attr('data-id') && !$('#genealogyForm').attr('data-preset')) {
             resetGenealogyForm();
         }
     });
@@ -198,6 +225,8 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     $('#genealogyModal').on('hidden.bs.modal', resetGenealogyForm);
+
+    openGenealogyFromQueryString();
 });
 
 function prepareEditForm(genealogy) {
@@ -213,6 +242,8 @@ function prepareEditForm(genealogy) {
     ].forEach(function (field) {
         $(`#${field}`).val(genealogy[field] ?? '');
     });
+
+    filterRelativeCattle();
 }
 
 function syncGenerationLevel() {
@@ -223,10 +254,44 @@ function syncGenerationLevel() {
     }
 }
 
+function filterRelativeCattle() {
+    const relation = $('#relation_type').val();
+    const requiredSex = sexByRelation[relation] || null;
+    const mainCattleId = $('#cattle_id').val();
+    const $relativeSelect = $('#relative_cattle_id');
+    const selectedOption = $relativeSelect.find('option:selected');
+    const selectedSex = selectedOption.data('sex');
+    const selectedRelativeId = $relativeSelect.val();
+
+    $relativeSelect.find('option').each(function () {
+        const $option = $(this);
+        const optionValue = String($option.val() || '');
+        const optionSex = $option.data('sex');
+        const isManualOption = !optionValue;
+        const matchesSex = !requiredSex || optionSex === requiredSex;
+        const isDifferentAnimal = !mainCattleId || optionValue !== String(mainCattleId);
+        const canShow = isManualOption || (matchesSex && isDifferentAnimal);
+
+        $option.prop('disabled', !canShow).toggleClass('d-none', !canShow);
+    });
+
+    if (
+        selectedRelativeId
+        && ((requiredSex && selectedSex !== requiredSex) || String(selectedRelativeId) === String(mainCattleId))
+    ) {
+        $relativeSelect.val('');
+        clearRelativeData();
+    }
+
+    $('#relative_cattle_id-help').text(relationSexHelp[relation]
+        || 'Si la relación es Madre, aquí debes seleccionar la hembra que será madre del animal principal. Si la relación es Padre, selecciona el macho que será padre.');
+}
+
 function fillRelativeData() {
     const relative = selectedCattle($('#relative_cattle_id').val());
 
     if (!relative) {
+        clearRelativeData();
         return;
     }
 
@@ -234,6 +299,97 @@ function fillRelativeData() {
     $('#relative_name').val(relative.name || '');
     $('#breed_id').val(relative.breed_id || '');
     $('#purity_percentage').val(relative.purity_percentage || '');
+}
+
+function clearRelativeData() {
+    $('#relative_code').val('');
+    $('#relative_name').val('');
+    $('#breed_id').val('');
+    $('#purity_percentage').val('');
+}
+
+function validateGenealogyFormBeforeSubmit() {
+    const mainCattleId = $('#cattle_id').val();
+    const relativeCattleId = $('#relative_cattle_id').val();
+    const relation = $('#relation_type').val();
+    const requiredSex = sexByRelation[relation] || null;
+    const relative = selectedCattle(relativeCattleId);
+
+    if (mainCattleId && relativeCattleId && String(mainCattleId) === String(relativeCattleId)) {
+        showValidationErrors({
+            relative_cattle_id: ['El familiar no puede ser el mismo animal principal.']
+        });
+        return false;
+    }
+
+    if (relative && requiredSex && relative.sex !== requiredSex) {
+        showValidationErrors({
+            relative_cattle_id: [sexMismatchMessage(relation, relative.sex)]
+        });
+        return false;
+    }
+
+    const directParentError = directParentAsGrandparentMessage(relation, mainCattleId, relativeCattleId);
+
+    if (directParentError) {
+        showValidationErrors({
+            relative_cattle_id: [directParentError]
+        });
+        return false;
+    }
+
+    return true;
+}
+
+function directParentAsGrandparentMessage(relation, mainCattleId, relativeCattleId) {
+    if (!mainCattleId || !relativeCattleId) {
+        return null;
+    }
+
+    const mainAnimal = selectedCattle(mainCattleId);
+
+    if (!mainAnimal) {
+        return null;
+    }
+
+    if (
+        ['paternal_grandfather', 'paternal_grandmother'].includes(relation)
+        && Number(mainAnimal.father_id) === Number(relativeCattleId)
+    ) {
+        return 'El padre del animal no puede registrarse también como abuelo paterno.';
+    }
+
+    if (
+        ['maternal_grandfather', 'maternal_grandmother'].includes(relation)
+        && Number(mainAnimal.mother_id) === Number(relativeCattleId)
+    ) {
+        return 'La madre del animal no puede registrarse también como abuela materna.';
+    }
+
+    if (
+        ['paternal_grandfather', 'paternal_grandmother', 'maternal_grandfather', 'maternal_grandmother'].includes(relation)
+        && [Number(mainAnimal.father_id), Number(mainAnimal.mother_id)].includes(Number(relativeCattleId))
+    ) {
+        return 'Un padre o madre directo no puede registrarse como abuelo o abuela del mismo animal.';
+    }
+
+    return null;
+}
+
+function sexMismatchMessage(relation, selectedSex) {
+    if (relation === 'mother') {
+        return 'La madre debe ser un animal hembra.';
+    }
+
+    if (relation === 'father') {
+        return 'El padre debe ser un animal macho.';
+    }
+
+    if (sexByRelation[relation] === 'male') {
+        return 'El abuelo debe ser un animal macho.';
+    }
+
+    return 'La abuela debe ser un animal hembra.';
 }
 
 function selectedCattle(id) {
@@ -294,11 +450,34 @@ function resetGenealogyForm() {
     }
 
     form.reset();
-    $('#genealogyForm').removeAttr('data-id');
+    $('#genealogyForm').removeAttr('data-id data-preset');
     $('#generation_level').val('1');
     $('#genealogyModalLabel').text('Nuevo Registro Genealógico');
     $('#saveGenealogyButton span').text('Guardar Registro');
     clearValidation();
+    filterRelativeCattle();
+}
+
+function openGenealogyFromQueryString() {
+    const params = new URLSearchParams(window.location.search);
+    const cattleId = params.get('cattle_id');
+    const relationType = params.get('relation_type');
+
+    if (!cattleId) {
+        return;
+    }
+
+    resetGenealogyForm();
+    $('#genealogyForm').attr('data-preset', '1');
+    $('#cattle_id').val(cattleId);
+
+    if (relationType) {
+        $('#relation_type').val(relationType);
+        syncGenerationLevel();
+    }
+
+    filterRelativeCattle();
+    $('#genealogyModal').modal('show');
 }
 
 function clearValidation() {
