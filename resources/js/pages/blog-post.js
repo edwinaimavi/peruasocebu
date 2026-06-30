@@ -87,7 +87,8 @@ function initRichEditor() {
         menubar: false,
         branding: false,
         plugins: 'advlist autolink lists link charmap preview anchor searchreplace visualblocks code fullscreen insertdatetime table wordcount',
-        toolbar: 'undo redo | styleselect | bold italic underline removeformat | forecolor backcolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | link table | code fullscreen',
+        toolbar: 'undo redo | styleselect fontsizeselect | bold italic underline strikethrough removeformat | forecolor backcolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | link table | code fullscreen',
+        font_size_formats: '12px 14px 16px 18px 20px 24px 28px 32px 36px',
         content_style: 'body { font-family: Arial, sans-serif; font-size: 14px; line-height: 1.7; }',
         setup: function (editor) {
             editor.on('change keyup undo redo', function () {

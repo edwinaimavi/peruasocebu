@@ -7,11 +7,13 @@ use Illuminate\View\View;
 
 class CertificateVerificationController extends Controller
 {
-    public function show(string $code): View
+    public function show(?string $code = null): View
     {
-        $certificate = Certificate::with(['cattle.breed', 'ranch', 'owner', 'veterinarian'])
-            ->where('verification_code', $code)
-            ->first();
+        $certificate = $code
+            ? Certificate::with(['cattle.breed', 'ranch', 'owner', 'veterinarian'])
+                ->where('verification_code', $code)
+                ->first()
+            : null;
 
         return view('certificates.verify', [
             'certificate' => $certificate,

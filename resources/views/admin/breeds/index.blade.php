@@ -45,6 +45,7 @@
                         <tr>
                             <th>#</th>
                             <th>ID</th>
+                            <th>Imagen</th>
                             <th>Código</th>
                             <th>Nombre</th>
                             <th>País de origen</th>
@@ -97,6 +98,15 @@
             border-top: 1px solid #e6eaee;
         }
 
+        #breedModal .tox-tinymce {
+            border-radius: .25rem;
+            width: 100% !important;
+        }
+
+        #breedModal .tox-tinymce.is-invalid {
+            border-color: #dc3545;
+        }
+
         .breed-detail-label {
             color: #6c757d;
             font-size: .76rem;
@@ -128,6 +138,100 @@
             font-weight: 800;
             letter-spacing: .08em;
             padding: .35rem .7rem;
+        }
+
+        .breed-table-thumb,
+        .breed-table-thumb-placeholder {
+            align-items: center;
+            border-radius: 12px;
+            display: inline-flex;
+            height: 48px;
+            justify-content: center;
+            overflow: hidden;
+            width: 58px;
+        }
+
+        .breed-table-thumb {
+            object-fit: cover;
+        }
+
+        .breed-table-thumb-placeholder {
+            background: #eef6f2;
+            border: 1px solid #dce8e2;
+            color: #6c8a77;
+            font-size: 1.2rem;
+        }
+
+        .breed-image-upload-card {
+            align-items: center;
+            background: #f8fafc;
+            border: 1px dashed #cfd8dc;
+            border-radius: 12px;
+            display: flex;
+            gap: 1rem;
+            padding: .85rem;
+        }
+
+        .breed-image-preview {
+            align-items: center;
+            background: #fff;
+            border: 1px solid #e4ece8;
+            border-radius: 12px;
+            color: #6c757d;
+            display: flex;
+            flex: 0 0 118px;
+            flex-direction: column;
+            font-size: .8rem;
+            height: 86px;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .breed-image-preview i {
+            font-size: 1.7rem;
+            margin-bottom: .25rem;
+        }
+
+        .breed-image-preview img,
+        .breed-detail-image img {
+            height: 100%;
+            object-fit: cover;
+            width: 100%;
+        }
+
+        .breed-detail-image,
+        .breed-detail-image-placeholder {
+            border-radius: 14px;
+            min-height: 140px;
+            overflow: hidden;
+        }
+
+        .breed-detail-image {
+            background: #f8fafc;
+            border: 1px solid #e4ece8;
+        }
+
+        .breed-detail-image-placeholder {
+            align-items: center;
+            color: #6c8a77;
+            display: flex;
+            flex-direction: column;
+            gap: .35rem;
+            justify-content: center;
+        }
+
+        .breed-detail-image-placeholder i {
+            font-size: 2rem;
+        }
+
+        .breed-detail-content {
+            line-height: 1.65;
+        }
+
+        .breed-detail-content p:last-child,
+        .breed-detail-content ul:last-child,
+        .breed-detail-content ol:last-child {
+            margin-bottom: 0;
         }
 
         @media (max-width: 575.98px) {

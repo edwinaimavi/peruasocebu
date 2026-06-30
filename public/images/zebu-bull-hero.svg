@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 440" role="img" aria-labelledby="title desc">
+  <title id="title">Toro cebu estilizado</title>
+  <desc id="desc">Ilustracion plana dorada de un toro cebu con joroba, cuernos, cabeza bovina corta y cuerpo robusto.</desc>
+  <defs>
+    <linearGradient id="bodyGold" x1="102" y1="95" x2="590" y2="360" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#E8D69A"/>
+      <stop offset=".48" stop-color="#D8BE78"/>
+      <stop offset="1" stop-color="#B88A2A"/>
+    </linearGradient>
+    <linearGradient id="darkGold" x1="150" y1="120" x2="560" y2="360" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#CFA84F"/>
+      <stop offset="1" stop-color="#9E701F"/>
+    </linearGradient>
+  </defs>
+
+  <ellipse cx="337" cy="378" rx="238" ry="31" fill="rgba(18, 53, 36, 0.25)"/>
+
+  <path d="M124 250c9-50 43-84 101-102 31-10 66-12 103-7 12-35 35-59 68-72 12-4 24-6 36-5-12 24-12 48 2 72 32 8 59 24 79 48 17-7 37-7 59 1 31 12 51 37 52 68 1 29-16 52-48 67-18 8-38 11-60 8l-14 53h-36l-12-66-169 2-15 64h-37l-9-68c-42-6-73-20-92-43-17 0-35-6-55-18 21-2 37-10 47-22Z" fill="url(#bodyGold)"/>
+
+  <path d="M322 141c16-52 49-85 99-99 12 37 10 71-6 102-31-7-62-8-93-3Z" fill="#D8BE78"/>
+  <path d="M346 150c22-37 48-60 78-70 1 27-5 50-19 70-19-4-39-4-59 0Z" fill="#E8D69A" opacity=".65"/>
+
+  <path d="M478 192c18-24 48-35 86-28 37 7 61 33 61 66 0 31-23 53-59 59-34 5-67-4-87-26-18-20-18-50-1-71Z" fill="url(#bodyGold)"/>
+  <path d="M545 236c27-10 54-4 71 14-7 22-27 35-54 36-24 1-45-7-60-22 7-12 21-22 43-28Z" fill="#E8D69A"/>
+  <path d="M575 252c10 0 19 3 25 9-7 7-17 11-30 10-10-1-19-4-25-10 7-5 17-8 30-9Z" fill="#6F4B18" opacity=".75"/>
+  <circle cx="556" cy="211" r="6" fill="#123524"/>
+
+  <path d="M492 182c-23-23-34-48-30-75 30 14 49 36 55 65" fill="none" stroke="#F0DAA0" stroke-width="13" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M546 177c16-28 41-43 75-45-9 31-30 51-63 59" fill="none" stroke="#F0DAA0" stroke-width="13" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <path d="M488 198c-25 6-48 1-70-16 25-15 52-15 80 1Z" fill="#B88A2A"/>
+  <path d="M553 192c24-13 47-14 70-1-16 21-39 31-68 28Z" fill="#B88A2A"/>
+
+  <path d="M205 308h39l-8 73h-39Z" fill="url(#darkGold)"/>
+  <path d="M284 313h38l-10 68h-38Z" fill="#C79B42"/>
+  <path d="M446 310h39l13 71h-39Z" fill="url(#darkGold)"/>
+  <path d="M514 307h38l-13 74h-39Z" fill="#C79B42"/>
+  <path d="M190 381h62M266 381h60M450 381h58M493 381h57" fill="none" stroke="#8F641C" stroke-width="13" stroke-linecap="round"/>
+
+  <path d="M132 247c-34-4-61-24-80-61 45 2 78 20 99 55Z" fill="#B88A2A"/>
+  <path d="M75 190c-17 45-13 87 12 125" fill="none" stroke="#C99A48" stroke-width="10" stroke-linecap="round"/>
+  <path d="M73 319c17 9 32 9 46-1" fill="none" stroke="#8F641C" stroke-width="11" stroke-linecap="round"/>
+
+  <path d="M178 202c48 20 103 27 165 21 43-4 85-2 124 6" fill="none" stroke="#F4E1AB" stroke-width="14" stroke-linecap="round" opacity=".32"/>
+  <path d="M432 259c22 20 50 31 84 32" fill="none" stroke="#9E701F" stroke-width="10" stroke-linecap="round" opacity=".36"/>
+</svg>

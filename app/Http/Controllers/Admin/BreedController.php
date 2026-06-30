@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Breed;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
@@ -32,6 +33,7 @@ class BreedController extends Controller
 
         return DataTables::eloquent($breeds)
             ->addIndexColumn()
+            ->addColumn('image', fn (Breed $breed) => $this->tableImage($breed))
             ->editColumn('code', fn (Breed $breed) => '<span class="badge badge-light border px-2 py-1">'.e($breed->code).'</span>')
             ->editColumn('origin_country', fn (Breed $breed) => $breed->origin_country ?: '—')
             ->editColumn('status', fn (Breed $breed) => $breed->status === 'active'
@@ -42,7 +44,7 @@ class BreedController extends Controller
                 'admin.breeds.partials.acciones',
                 compact('breed')
             )->render())
-            ->rawColumns(['code', 'name', 'origin_country', 'status', 'acciones'])
+            ->rawColumns(['image', 'code', 'name', 'origin_country', 'status', 'acciones'])
             ->toJson();
     }
 
@@ -50,6 +52,7 @@ class BreedController extends Controller
     {
         $data = $this->validatedData($request);
         $data['code'] = $this->generateBreedCode($data['name']);
+        $data['image_path'] = $this->storeImage($request);
 
         Breed::create($data);
 
@@ -63,6 +66,7 @@ class BreedController extends Controller
         return response()->json([
             'breed' => array_merge($breed->toArray(), [
                 'status_label' => $breed->status === 'active' ? 'Activo' : 'Inactivo',
+                'image_url' => $this->imageUrl($breed->image_path),
                 'created_at_formatted' => $breed->created_at?->format('d/m/Y H:i'),
                 'updated_at_formatted' => $breed->updated_at?->format('d/m/Y H:i'),
             ]),
@@ -79,6 +83,11 @@ class BreedController extends Controller
             $data['code'] = $breed->code ?: $this->generateBreedCode($data['name'], $breed->id);
         }
 
+        if ($request->hasFile('image')) {
+            $this->deleteImage($breed->image_path);
+            $data['image_path'] = $this->storeImage($request);
+        }
+
         $breed->update($data);
 
         return response()->json([
@@ -88,6 +97,7 @@ class BreedController extends Controller
 
     public function destroy(Breed $breed): JsonResponse
     {
+        $this->deleteImage($breed->image_path);
         $breed->delete();
 
         return response()->json([
@@ -113,17 +123,71 @@ class BreedController extends Controller
             'description' => ['nullable', 'string'],
             'origin_country' => ['nullable', 'string', 'max:150'],
             'characteristics' => ['nullable', 'string'],
+            'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
             'status' => ['required', 'in:active,inactive'],
         ], [
             'name.required' => 'El nombre de la raza es obligatorio.',
             'code.required' => 'El código de la raza es obligatorio.',
             'code.regex' => 'El código no debe contener espacios ni caracteres especiales.',
             'code.unique' => 'El código de la raza ya está registrado.',
+            'image.image' => 'El archivo debe ser una imagen.',
+            'image.mimes' => 'La imagen debe estar en formato JPG, JPEG, PNG o WEBP.',
+            'image.max' => 'La imagen no debe superar los 4 MB.',
             'status.required' => 'Seleccione el estado de la raza.',
             'status.in' => 'El estado seleccionado no es válido.',
         ]);
 
+        unset($data['image']);
+        $data['description'] = $this->sanitizeRichText($data['description'] ?? null);
+        $data['characteristics'] = $this->sanitizeRichText($data['characteristics'] ?? null);
+
         return $data;
+    }
+
+    private function sanitizeRichText(?string $content): ?string
+    {
+        if ($content === null) {
+            return null;
+        }
+
+        $content = preg_replace('#<script(.*?)>(.*?)</script>#is', '', $content) ?? '';
+        $content = preg_replace('#<iframe(.*?)>(.*?)</iframe>#is', '', $content) ?? '';
+        $content = preg_replace('/\son\w+\s*=\s*(".*?"|\'.*?\'|[^\s>]+)/is', '', $content) ?? '';
+        $content = preg_replace('/javascript\s*:/is', '', $content) ?? '';
+
+        return $content;
+    }
+
+    private function storeImage(Request $request): ?string
+    {
+        if (! $request->hasFile('image')) {
+            return null;
+        }
+
+        return $request->file('image')->store('breeds', 'public');
+    }
+
+    private function deleteImage(?string $path): void
+    {
+        if ($path) {
+            Storage::disk('public')->delete($path);
+        }
+    }
+
+    private function imageUrl(?string $path): ?string
+    {
+        return $path ? Storage::disk('public')->url($path) : null;
+    }
+
+    private function tableImage(Breed $breed): string
+    {
+        $imageUrl = $this->imageUrl($breed->image_path);
+
+        if ($imageUrl) {
+            return '<img class="breed-table-thumb" src="'.e($imageUrl).'" alt="Imagen de '.e($breed->name).'">';
+        }
+
+        return '<span class="breed-table-thumb-placeholder"><i class="fas fa-cow"></i></span>';
     }
 
     private function generateBreedCode(string $name, ?int $ignoreId = null): string

@@ -112,7 +112,7 @@ return [
     |------------------------------------------------------------------
     */
     'use_route_url' => false,
-    'dashboard_url' => 'home',
+    'dashboard_url' => 'admin/dashboard',
     'logout_url' => 'logout',
     'login_url' => 'login',
     'register_url' => 'register',
@@ -128,7 +128,7 @@ return [
         ['type' => 'fullscreen-widget', 'topnav_right' => true],
 
         ['header' => 'ADMINISTRACION'],
-        ['text' => 'Dashboard', 'url' => 'home', 'icon' => 'fas fa-chart-line'],
+        ['text' => 'Dashboard', 'url' => 'admin/dashboard', 'icon' => 'fas fa-chart-line', 'active' => ['admin/dashboard']],
 
         [
             'text' => 'Administracion / Seguridad',

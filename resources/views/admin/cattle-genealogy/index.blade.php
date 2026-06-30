@@ -48,7 +48,7 @@
                             <th>Animal principal</th>
                             <th>Código animal</th>
                             <th>Relación</th>
-                            <th>Generación</th>
+                            <th>Generacion</th>
                             <th>Familiar</th>
                             <th>Raza familiar</th>
                             <th>Pureza</th>
@@ -212,6 +212,37 @@
             grid-column: 1 / -1;
         }
 
+        .genealogy-lineage-help,
+        .genealogy-relation-preview {
+            background: #f8fbf8;
+            border: 1px solid rgba(31, 77, 54, .12);
+            border-radius: 12px;
+            color: #2f3b43;
+            font-size: .82rem;
+            line-height: 1.45;
+            padding: 10px 12px;
+        }
+
+        .genealogy-relation-preview {
+            margin-top: 8px;
+        }
+
+        .genealogy-relation-preview-title {
+            align-items: center;
+            color: #1f4d36;
+            display: flex;
+            font-size: .75rem;
+            font-weight: 900;
+            gap: 6px;
+            letter-spacing: .04em;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+        }
+
+        .genealogy-relation-preview-title i {
+            color: #c89b3c;
+        }
+
         @media (max-width: 767.98px) {
             .genealogy-detail-grid,
             .genealogy-flow-grid {
@@ -257,6 +288,7 @@
         };
 
         window.genealogyCattle = @json($cattleOptions);
+        window.maxGenealogyGeneration = @json($maxGenerationLevel);
     </script>
     @vite(['resources/js/pages/cattle-genealogy.js'])
 @endpush

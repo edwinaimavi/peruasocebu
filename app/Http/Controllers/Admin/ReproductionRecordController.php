@@ -264,9 +264,15 @@ class ReproductionRecordController extends Controller
                 continue;
             }
 
+            $lineagePath = $relation === 'father' ? 'F' : 'M';
             $existing = CattleGenealogyLink::query()
                 ->where('cattle_id', $offspring->id)
-                ->where('relation_type', $relation)
+                ->where(function ($query) use ($relation, $lineagePath) {
+                    $query->where('lineage_path', $lineagePath)
+                        ->orWhere(function ($legacyQuery) use ($relation) {
+                            $legacyQuery->whereNull('lineage_path')->where('relation_type', $relation);
+                        });
+                })
                 ->first();
 
             if ($existing && (int) $existing->relative_cattle_id !== $relativeId) {
@@ -314,13 +320,17 @@ class ReproductionRecordController extends Controller
             return;
         }
 
+        $lineagePath = $relation === 'father' ? 'F' : 'M';
+
         CattleGenealogyLink::updateOrCreate(
             [
                 'cattle_id' => $offspring->id,
-                'relation_type' => $relation,
+                'lineage_path' => $lineagePath,
             ],
             [
+                'relation_type' => $relation,
                 'relative_cattle_id' => $parent->id,
+                'lineage_path' => $lineagePath,
                 'generation_level' => 1,
                 'relative_code' => $parent->code,
                 'relative_name' => $parent->name,

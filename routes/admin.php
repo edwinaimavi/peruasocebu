@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\CattleSaleController;
 use App\Http\Controllers\Admin\CertificateController;
 use App\Http\Controllers\Admin\CertificateSignatureController;
 use App\Http\Controllers\Admin\ContactMessageController;
+use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\DocumentLookupController;
 use App\Http\Controllers\Admin\OwnerController;
 use App\Http\Controllers\Admin\OwnershipHistoryController;
@@ -24,6 +25,8 @@ use App\Http\Controllers\Admin\WeightRecordController;
 use Illuminate\Support\Facades\Route;
 
 // Rutas para la gestión de usuarios en el panel de administración|
+Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
 Route::get('users/list', [UserController::class, 'list'])->name('users.list');
 Route::resource('users', UserController::class)->except(['create', 'show']);
 

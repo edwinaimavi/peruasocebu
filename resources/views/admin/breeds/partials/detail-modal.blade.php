@@ -36,21 +36,31 @@
                 <div class="card border-0 shadow-sm">
                     <div class="card-body">
                         <div class="row">
-                            <div class="col-md-6">
+                            <div class="col-md-4">
+                                <div class="breed-detail-label">Imagen</div>
+                                <div class="breed-detail-image mb-3">
+                                    <img id="detailBreedImage" class="d-none" src="" alt="Imagen de la raza">
+                                    <div id="detailBreedImagePlaceholder" class="breed-detail-image-placeholder">
+                                        <i class="fas fa-cow"></i>
+                                        <span>Sin imagen</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
                                 <div class="breed-detail-label">País de origen</div>
                                 <div class="breed-detail-value mb-3" id="detailOriginCountry">—</div>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-md-4">
                                 <div class="breed-detail-label">Estado</div>
                                 <div class="breed-detail-value mb-3" id="detailStatusText">—</div>
                             </div>
                             <div class="col-md-12">
                                 <div class="breed-detail-label">Descripción</div>
-                                <div class="breed-detail-value mb-3" id="detailDescription">—</div>
+                                <div class="breed-detail-value breed-detail-content mb-3" id="detailDescription">—</div>
                             </div>
                             <div class="col-md-12">
                                 <div class="breed-detail-label">Características</div>
-                                <div class="breed-detail-value mb-3" id="detailCharacteristics">—</div>
+                                <div class="breed-detail-value breed-detail-content mb-3" id="detailCharacteristics">—</div>
                             </div>
                             <div class="col-md-6">
                                 <div class="breed-detail-label">Fecha de registro</div>

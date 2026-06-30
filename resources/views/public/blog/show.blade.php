@@ -1,10 +1,10 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{ $post->title }} | PERU ASOCEBU</title>
-    @vite('resources/css/public-home.css')
+@extends('public.layouts.app')
+
+@section('title', $post->title . ' | PERU ASOCEBU')
+@section('meta_description', $post->summary ?: \Illuminate\Support\Str::limit(strip_tags($post->content), 155))
+@section('main_class', 'post-page')
+
+@push('styles')
     <style>
         body { background: #f5f7f3; color: #20372b; }
         .post-page { padding: 110px 0 56px; }
@@ -20,50 +20,30 @@
         .blog-content table { border-collapse: collapse; margin: 1rem 0; width: 100%; }
         .blog-content table td, .blog-content table th { border: 1px solid #dfe8e2; padding: 8px; }
     </style>
-</head>
-<body>
-    <header class="site-header">
-        <div class="container nav-wrap">
-            <a class="brand" href="{{ route('public.home') }}">
-                <span class="brand-mark" aria-hidden="true">PA</span>
-                <span><strong>PERU ASOCEBU</strong><small>Genetica que deja huella</small></span>
-            </a>
-            <nav class="main-nav is-open" aria-label="Navegacion principal">
-                <a href="{{ route('public.home') }}">Inicio</a>
-                <a href="{{ route('public.blog.index') }}">Blog</a>
-                @auth
-                    <a href="{{ route('home') }}">Panel</a>
-                @else
-                    <a href="{{ route('login') }}">Iniciar sesion</a>
-                @endauth
-            </nav>
-        </div>
-    </header>
+@endpush
 
-    <main class="post-page">
-        <article class="container post-shell">
-            <a class="text-link" href="{{ route('public.blog.index') }}"><span>&larr;</span> Volver al blog</a>
-            <header class="post-hero">
-                <span class="eyebrow"><span></span>Blog / Noticias</span>
-                <h1>{{ $post->title }}</h1>
-                <div class="post-meta">
-                    {{ $post->published_at?->format('d/m/Y') }} &middot; {{ $post->author?->name ?: 'PERU ASOCEBU' }}
-                </div>
-                @if ($post->summary)
-                    <p>{{ $post->summary }}</p>
-                @endif
-            </header>
-
-            @if ($post->image_path)
-                <img class="post-image" src="{{ \Illuminate\Support\Facades\Storage::url($post->image_path) }}" alt="{{ $post->title }}">
+@section('content')
+    <article class="container post-shell">
+        <a class="text-link" href="{{ route('public.blog.index') }}"><span>&larr;</span> Volver al blog</a>
+        <header class="post-hero">
+            <span class="eyebrow"><span></span>Blog / Noticias</span>
+            <h1>{{ $post->title }}</h1>
+            <div class="post-meta">
+                {{ $post->published_at?->format('d/m/Y') }} &middot; {{ $post->author?->name ?: 'PERU ASOCEBU' }}
+            </div>
+            @if ($post->summary)
+                <p>{{ $post->summary }}</p>
             @endif
+        </header>
 
-            <section class="post-card">
-                <div class="blog-content">
-                    {!! $post->content !!}
-                </div>
-            </section>
-        </article>
-    </main>
-</body>
-</html>
+        @if ($post->image_path)
+            <img class="post-image" src="{{ \Illuminate\Support\Facades\Storage::url($post->image_path) }}" alt="{{ $post->title }}">
+        @endif
+
+        <section class="post-card">
+            <div class="blog-content">
+                {!! $post->content !!}
+            </div>
+        </section>
+    </article>
+@endsection

@@ -4,10 +4,12 @@ use App\Models\User;
 
 test('guests are redirected to the login page', function () {
     $this->get('/dashboard')->assertRedirect('/login');
+    $this->get('/admin/dashboard')->assertRedirect('/login');
 });
 
 test('authenticated users can visit the dashboard', function () {
     $this->actingAs($user = User::factory()->create());
 
-    $this->get('/dashboard')->assertStatus(200);
+    $this->get('/dashboard')->assertRedirect('/admin/dashboard');
+    $this->get('/admin/dashboard')->assertStatus(200);
 });

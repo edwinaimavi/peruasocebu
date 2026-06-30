@@ -11,7 +11,7 @@ class CattleGenealogyLink extends Model
     use DecodesTextValues;
 
     protected $fillable = [
-        'cattle_id', 'relative_cattle_id', 'relation_type', 'generation_level',
+        'cattle_id', 'relative_cattle_id', 'relation_type', 'lineage_path', 'generation_level',
         'relative_code', 'relative_name', 'breed_id', 'purity_percentage', 'notes',
     ];
 

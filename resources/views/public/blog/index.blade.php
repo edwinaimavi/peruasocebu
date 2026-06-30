@@ -1,10 +1,10 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Blog y Noticias | PERU ASOCEBU</title>
-    @vite('resources/css/public-home.css')
+@extends('public.layouts.app')
+
+@section('title', 'Blog y Noticias | PERU ASOCEBU')
+@section('meta_description', 'Publicaciones, novedades y conocimiento para fortalecer la crianza bovina.')
+@section('main_class', 'blog-page')
+
+@push('styles')
     <style>
         body { background: #f5f7f3; color: #20372b; }
         .blog-page { padding: 110px 0 56px; }
@@ -25,60 +25,40 @@
         @media (max-width: 900px) { .blog-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
         @media (max-width: 620px) { .blog-grid { grid-template-columns: 1fr; } }
     </style>
-</head>
-<body>
-    <header class="site-header">
-        <div class="container nav-wrap">
-            <a class="brand" href="{{ route('public.home') }}">
-                <span class="brand-mark" aria-hidden="true">PA</span>
-                <span><strong>PERU ASOCEBU</strong><small>Genetica que deja huella</small></span>
-            </a>
-            <nav class="main-nav is-open" aria-label="Navegacion principal">
-                <a href="{{ route('public.home') }}">Inicio</a>
-                <a href="{{ route('public.blog.index') }}">Blog</a>
-                @auth
-                    <a href="{{ route('home') }}">Panel</a>
-                @else
-                    <a href="{{ route('login') }}">Iniciar sesion</a>
-                @endauth
-            </nav>
-        </div>
-    </header>
+@endpush
 
-    <main class="blog-page">
-        <div class="container">
-            <section class="blog-hero">
-                <span class="eyebrow"><span></span>Actualidad ganadera</span>
-                <h1>Blog y Noticias</h1>
-                <p>Publicaciones, novedades y conocimiento para fortalecer la crianza bovina.</p>
-            </section>
+@section('content')
+    <div class="container">
+        <section class="blog-hero">
+            <span class="eyebrow"><span></span>Actualidad ganadera</span>
+            <h1>Blog y Noticias</h1>
+            <p>Publicaciones, novedades y conocimiento para fortalecer la crianza bovina.</p>
+        </section>
 
-            @if ($posts->isEmpty())
-                <div class="blog-empty">Proximamente compartiremos noticias y novedades de nuestro criadero.</div>
-            @else
-                <div class="blog-grid">
-                    @foreach ($posts as $post)
-                        <article class="blog-card">
-                            @if ($post->image_path)
-                                <img src="{{ \Illuminate\Support\Facades\Storage::url($post->image_path) }}" alt="{{ $post->title }}">
-                            @endif
-                            <div class="blog-card-body">
-                                <div class="blog-meta">
-                                    {{ $post->published_at?->format('d/m/Y') }} &middot; {{ $post->author?->name ?: 'PERU ASOCEBU' }}
-                                </div>
-                                <h2>{{ $post->title }}</h2>
-                                <p>{{ $post->summary ?: \Illuminate\Support\Str::limit(strip_tags($post->content), 140) }}</p>
-                                <a class="text-link" href="{{ route('public.blog.show', $post->slug) }}">Leer mas <span>&rarr;</span></a>
+        @if ($posts->isEmpty())
+            <div class="blog-empty">Proximamente compartiremos noticias y novedades de nuestro criadero.</div>
+        @else
+            <div class="blog-grid">
+                @foreach ($posts as $post)
+                    <article class="blog-card">
+                        @if ($post->image_path)
+                            <img src="{{ \Illuminate\Support\Facades\Storage::url($post->image_path) }}" alt="{{ $post->title }}">
+                        @endif
+                        <div class="blog-card-body">
+                            <div class="blog-meta">
+                                {{ $post->published_at?->format('d/m/Y') }} &middot; {{ $post->author?->name ?: 'PERU ASOCEBU' }}
                             </div>
-                        </article>
-                    @endforeach
-                </div>
+                            <h2>{{ $post->title }}</h2>
+                            <p>{{ $post->summary ?: \Illuminate\Support\Str::limit(strip_tags($post->content), 140) }}</p>
+                            <a class="text-link" href="{{ route('public.blog.show', $post->slug) }}">Leer mas <span>&rarr;</span></a>
+                        </div>
+                    </article>
+                @endforeach
+            </div>
 
-                <div class="mt-4">
-                    {{ $posts->links() }}
-                </div>
-            @endif
-        </div>
-    </main>
-</body>
-</html>
+            <div class="mt-4">
+                {{ $posts->links() }}
+            </div>
+        @endif
+    </div>
+@endsection

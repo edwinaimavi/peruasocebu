@@ -25,15 +25,25 @@ class CattleGenealogyLinkController extends Controller
         'paternal_grandmother',
         'maternal_grandfather',
         'maternal_grandmother',
+        'lineage',
     ];
 
-    private const RELATION_REQUIRED_SEX = [
-        'father' => 'male',
-        'mother' => 'female',
-        'paternal_grandfather' => 'male',
-        'paternal_grandmother' => 'female',
-        'maternal_grandfather' => 'male',
-        'maternal_grandmother' => 'female',
+    private const LEGACY_RELATION_PATHS = [
+        'father' => 'F',
+        'mother' => 'M',
+        'paternal_grandfather' => 'FF',
+        'paternal_grandmother' => 'FM',
+        'maternal_grandfather' => 'MF',
+        'maternal_grandmother' => 'MM',
+    ];
+
+    private const LEGACY_RELATION_BY_PATH = [
+        'F' => 'father',
+        'M' => 'mother',
+        'FF' => 'paternal_grandfather',
+        'FM' => 'paternal_grandmother',
+        'MF' => 'maternal_grandfather',
+        'MM' => 'maternal_grandmother',
     ];
 
     private const GENERATION_BY_RELATION = [
@@ -55,6 +65,7 @@ class CattleGenealogyLinkController extends Controller
 
     public function index(): View
     {
+        $maxGenerationLevel = $this->maxGenerationLevel();
         $cattle = Cattle::with(['breed', 'ranch', 'currentOwner'])
             ->where('status', 'active')
             ->orderBy('code')
@@ -65,6 +76,8 @@ class CattleGenealogyLinkController extends Controller
             'relativeCattle' => $cattle,
             'breeds' => Breed::where('status', 'active')->orderBy('name')->get(),
             'cattleOptions' => $cattle->map(fn (Cattle $animal) => $this->cattleOption($animal))->values(),
+            'maxGenerationLevel' => $maxGenerationLevel,
+            'generationOptions' => $this->generationOptions($maxGenerationLevel),
         ]);
     }
 
@@ -78,7 +91,8 @@ class CattleGenealogyLinkController extends Controller
             ->addIndexColumn()
             ->addColumn('cattle_name', fn (CattleGenealogyLink $link) => $this->cattleLabel($link->cattle))
             ->addColumn('cattle_code', fn (CattleGenealogyLink $link) => $link->cattle?->code ?: '—')
-            ->editColumn('relation_type', fn (CattleGenealogyLink $link) => $this->relationBadge($link->relation_type))
+            ->addColumn('lineage_path', fn (CattleGenealogyLink $link) => $this->lineagePathBadge($this->linkLineagePath($link)))
+            ->editColumn('relation_type', fn (CattleGenealogyLink $link) => $this->relationBadge($link))
             ->editColumn('generation_level', fn (CattleGenealogyLink $link) => $this->generationBadge((int) $link->generation_level))
             ->addColumn('relative_name', fn (CattleGenealogyLink $link) => $this->relativeDisplayName($link))
             ->addColumn('breed_name', fn (CattleGenealogyLink $link) => $link->breed?->name ?: $link->relativeCattle?->breed?->name ?: '—')
@@ -90,7 +104,7 @@ class CattleGenealogyLinkController extends Controller
                 'admin.cattle-genealogy.partials.acciones',
                 ['link' => $link]
             )->render())
-            ->rawColumns(['cattle_name', 'cattle_code', 'relation_type', 'generation_level', 'relative_name', 'breed_name', 'acciones'])
+            ->rawColumns(['cattle_name', 'cattle_code', 'lineage_path', 'relation_type', 'generation_level', 'relative_name', 'breed_name', 'acciones'])
             ->toJson();
     }
 
@@ -99,6 +113,7 @@ class CattleGenealogyLinkController extends Controller
         $data = $this->validatedData($request);
         $data = $this->normalizeGenerationLevel($data);
         $this->ensureRelativeCattleCanBeParent($data);
+        $this->ensureIntermediateAncestorExists($data);
         $this->ensureRelativeDoesNotCreateCircularGenealogy($data);
         $this->ensureDirectParentIsNotGrandparent($data);
         $this->ensureRelativeBirthDateIsValid($data);
@@ -111,6 +126,7 @@ class CattleGenealogyLinkController extends Controller
         DB::transaction(function () use ($data): void {
             $link = CattleGenealogyLink::create($data);
             $this->syncCattleParent($link);
+            $this->syncIntermediateAncestor($link->cattle, $link);
         });
 
         return response()->json([
@@ -130,7 +146,9 @@ class CattleGenealogyLinkController extends Controller
 
         return response()->json([
             'genealogy' => array_merge($cattleGenealogyLink->toArray(), [
-                'relation_label' => $this->relationLabel($cattleGenealogyLink->relation_type),
+                'lineage_path' => $this->linkLineagePath($cattleGenealogyLink),
+                'lineage_path_label' => $this->lineagePathLabel($this->linkLineagePath($cattleGenealogyLink)),
+                'relation_label' => $this->relationLabel($cattleGenealogyLink->relation_type, $this->linkLineagePath($cattleGenealogyLink)),
                 'generation_label' => $this->generationLabel((int) $cattleGenealogyLink->generation_level),
                 'relative_display_name' => $this->relativeDisplayName($cattleGenealogyLink),
                 'relative_display_code' => $this->relativeDisplayCode($cattleGenealogyLink),
@@ -156,6 +174,7 @@ class CattleGenealogyLinkController extends Controller
         $data = $this->validatedData($request, $cattleGenealogyLink);
         $data = $this->normalizeGenerationLevel($data);
         $this->ensureRelativeCattleCanBeParent($data);
+        $this->ensureIntermediateAncestorExists($data);
         $this->ensureRelativeDoesNotCreateCircularGenealogy($data);
         $this->ensureDirectParentIsNotGrandparent($data);
         $this->ensureRelativeBirthDateIsValid($data);
@@ -174,7 +193,9 @@ class CattleGenealogyLinkController extends Controller
             $this->clearPreviousCattleParentIfNeeded($previous, $data);
 
             $cattleGenealogyLink->update($data);
-            $this->syncCattleParent($cattleGenealogyLink->refresh());
+            $cattleGenealogyLink->refresh();
+            $this->syncCattleParent($cattleGenealogyLink);
+            $this->syncIntermediateAncestor($cattleGenealogyLink->cattle, $cattleGenealogyLink);
         });
 
         return response()->json([
@@ -201,7 +222,8 @@ class CattleGenealogyLinkController extends Controller
                 'different:cattle_id',
             ],
             'relation_type' => ['required', Rule::in(self::RELATION_TYPES)],
-            'generation_level' => ['required', 'integer', 'min:1', 'max:9'],
+            'generation_level' => ['required', 'integer', 'min:1', 'max:'.$this->maxGenerationLevel()],
+            'lineage_path' => ['nullable', 'string', 'max:20', 'regex:/^[FM]+$/'],
             'relative_code' => ['nullable', 'string', 'max:120'],
             'relative_name' => [Rule::requiredIf(! $request->filled('relative_cattle_id')), 'nullable', 'string', 'max:255'],
             'breed_id' => ['nullable', 'exists:breeds,id'],
@@ -227,11 +249,44 @@ class CattleGenealogyLinkController extends Controller
 
     private function normalizeGenerationLevel(array $data): array
     {
+        $hasExplicitLineagePath = ! empty($data['lineage_path']);
+        $data['lineage_path'] = $this->normalizeLineagePath($data);
+        $data['relation_type'] = self::LEGACY_RELATION_BY_PATH[$data['lineage_path']] ?? 'lineage';
+
+        if (! $hasExplicitLineagePath && isset(self::GENERATION_BY_RELATION[$data['relation_type']])) {
+            $data['generation_level'] = self::GENERATION_BY_RELATION[$data['relation_type']];
+        }
+
+        if (strlen($data['lineage_path']) !== (int) $data['generation_level']) {
+            throw ValidationException::withMessages([
+                'lineage_path' => 'La ruta de linaje no coincide con la generaciÃ³n seleccionada.',
+            ]);
+        }
+
         if (isset(self::GENERATION_BY_RELATION[$data['relation_type']])) {
             $data['generation_level'] = self::GENERATION_BY_RELATION[$data['relation_type']];
         }
 
         return $data;
+    }
+
+    private function normalizeLineagePath(array $data): string
+    {
+        $lineagePath = strtoupper((string) ($data['lineage_path'] ?? ''));
+
+        if ($lineagePath !== '') {
+            return $lineagePath;
+        }
+
+        $legacyPath = $this->legacyRelationToPath($data['relation_type'] ?? null);
+
+        if ($legacyPath) {
+            return $legacyPath;
+        }
+
+        throw ValidationException::withMessages([
+            'lineage_path' => 'Seleccione la posicion del linaje.',
+        ]);
     }
 
     private function syncRelativeData(array $data): array
@@ -252,7 +307,7 @@ class CattleGenealogyLinkController extends Controller
 
     private function ensureRelativeCattleCanBeParent(array $data): void
     {
-        $requiredSex = self::RELATION_REQUIRED_SEX[$data['relation_type'] ?? ''] ?? null;
+        $requiredSex = $this->requiredSexForLineagePath($data['lineage_path'] ?? null);
 
         if (empty($data['relative_cattle_id']) || ! $requiredSex) {
             return;
@@ -266,13 +321,30 @@ class CattleGenealogyLinkController extends Controller
 
         if ($relative->sex !== $requiredSex) {
             throw ValidationException::withMessages([
-                'relative_cattle_id' => $this->relativeSexValidationMessage($data['relation_type'], $relative->sex),
+                'relative_cattle_id' => $this->relativeSexValidationMessage($data['relation_type'], $relative->sex, $data['lineage_path'] ?? null),
             ]);
         }
     }
 
-    private function relativeSexValidationMessage(string $relationType, string $selectedSex): string
+    private function requiredSexForLineagePath(?string $lineagePath): ?string
     {
+        if (! $lineagePath) {
+            return null;
+        }
+
+        return str_ends_with($lineagePath, 'F') ? 'male' : 'female';
+    }
+
+    private function relativeSexValidationMessage(string $relationType, string $selectedSex, ?string $lineagePath = null): string
+    {
+        if ($lineagePath && str_ends_with($lineagePath, 'F')) {
+            return 'La posiciÃ³n seleccionada corresponde a un macho. Seleccione un animal macho.';
+        }
+
+        if ($lineagePath && str_ends_with($lineagePath, 'M')) {
+            return 'La posiciÃ³n seleccionada corresponde a una hembra. Seleccione un animal hembra.';
+        }
+
         if ($relationType === 'father') {
             return 'El padre debe ser un animal macho.';
         }
@@ -289,9 +361,8 @@ class CattleGenealogyLinkController extends Controller
             return 'La abuela debe ser un animal hembra.';
         }
 
-        return 'El sexo del familiar no corresponde a la relación seleccionada.';
+        return 'El sexo del familiar no corresponde a la relacion seleccionada.';
     }
-
     private function ensureRelativeBirthDateIsValid(array $data): void
     {
         if (empty($data['relative_cattle_id'])) {
@@ -402,21 +473,42 @@ class CattleGenealogyLinkController extends Controller
 
     private function ensureUniqueGenealogyLink(array $data, ?int $ignoreId = null): void
     {
+        $lineagePath = $data['lineage_path'] ?? null;
+
         $exists = CattleGenealogyLink::query()
             ->where('cattle_id', $data['cattle_id'])
-            ->where('relation_type', $data['relation_type'])
+            ->where(function ($query) use ($lineagePath, $data) {
+                $query->where('lineage_path', $lineagePath);
+
+                if ($lineagePath && isset(self::LEGACY_RELATION_BY_PATH[$lineagePath])) {
+                    $query->orWhere(function ($legacyQuery) use ($data) {
+                        $legacyQuery
+                            ->whereNull('lineage_path')
+                            ->where('relation_type', $data['relation_type']);
+                    });
+                }
+            })
             ->when($ignoreId, fn ($query) => $query->whereKeyNot($ignoreId))
             ->exists();
 
         if ($exists) {
-            throw ValidationException::withMessages([
-                'relation_type' => $this->duplicateRelationMessage($data['relation_type']),
-            ]);
+            $message = $this->duplicateRelationMessage($data['relation_type'], $lineagePath);
+            $messages = ['lineage_path' => $message];
+
+            if (isset(self::LEGACY_RELATION_BY_PATH[$lineagePath])) {
+                $messages['relation_type'] = $message;
+            }
+
+            throw ValidationException::withMessages($messages);
         }
     }
 
-    private function duplicateRelationMessage(string $relationType): string
+    private function duplicateRelationMessage(string $relationType, ?string $lineagePath = null): string
     {
+        if ($lineagePath && ! isset(self::LEGACY_RELATION_BY_PATH[$lineagePath])) {
+            return 'Ya existe un familiar registrado para esa posicion del linaje.';
+        }
+
         return match ($relationType) {
             'father' => 'Este animal ya tiene un padre registrado.',
             'mother' => 'Este animal ya tiene una madre registrada.',
@@ -449,15 +541,7 @@ class CattleGenealogyLinkController extends Controller
 
     private function ensureDirectParentIsNotGrandparent(array $data): void
     {
-        if (
-            empty($data['relative_cattle_id'])
-            || ! in_array($data['relation_type'], [
-                'paternal_grandfather',
-                'paternal_grandmother',
-                'maternal_grandfather',
-                'maternal_grandmother',
-            ], true)
-        ) {
+        if (empty($data['relative_cattle_id']) || strlen((string) ($data['lineage_path'] ?? '')) < 2) {
             return;
         }
 
@@ -468,7 +552,7 @@ class CattleGenealogyLinkController extends Controller
         }
 
         if (
-            in_array($data['relation_type'], ['paternal_grandfather', 'paternal_grandmother'], true)
+            str_starts_with($data['lineage_path'], 'F')
             && (int) $cattle->father_id === (int) $data['relative_cattle_id']
         ) {
             throw ValidationException::withMessages([
@@ -477,7 +561,7 @@ class CattleGenealogyLinkController extends Controller
         }
 
         if (
-            in_array($data['relation_type'], ['maternal_grandfather', 'maternal_grandmother'], true)
+            str_starts_with($data['lineage_path'], 'M')
             && (int) $cattle->mother_id === (int) $data['relative_cattle_id']
         ) {
             throw ValidationException::withMessages([
@@ -493,6 +577,40 @@ class CattleGenealogyLinkController extends Controller
         ) {
             throw ValidationException::withMessages([
                 'relative_cattle_id' => 'Un padre o madre directo no puede registrarse como abuelo o abuela del mismo animal.',
+            ]);
+        }
+    }
+
+    private function ensureIntermediateAncestorExists(array $data): void
+    {
+        $path = (string) ($data['lineage_path'] ?? '');
+
+        if (strlen($path) < 2) {
+            return;
+        }
+
+        $principal = Cattle::find($data['cattle_id']);
+
+        if (! $principal) {
+            return;
+        }
+
+        $parentPath = substr($path, 0, -1);
+        $intermediate = $this->resolveCattleByLineagePath($principal, $parentPath);
+
+        if ($intermediate) {
+            return;
+        }
+
+        if ($path === 'FF' || $path === 'FM') {
+            throw ValidationException::withMessages([
+                'lineage_path' => 'Primero debe registrar el padre del animal principal para poder asignar abuelos paternos.',
+            ]);
+        }
+
+        if ($path === 'MF' || $path === 'MM') {
+            throw ValidationException::withMessages([
+                'lineage_path' => 'Primero debe registrar la madre del animal principal para poder asignar abuelos maternos.',
             ]);
         }
     }
@@ -581,6 +699,69 @@ class CattleGenealogyLinkController extends Controller
         }
     }
 
+    private function syncIntermediateAncestor(?Cattle $principal, CattleGenealogyLink $link): void
+    {
+        $path = $this->linkLineagePath($link);
+
+        if (! $principal || ! $path || strlen($path) < 2 || ! $link->relative_cattle_id) {
+            return;
+        }
+
+        $parentPath = substr($path, 0, -1);
+        $lastStep = substr($path, -1);
+        $intermediate = $this->resolveCattleByLineagePath($principal, $parentPath);
+
+        if (! $intermediate) {
+            return;
+        }
+
+        if ($lastStep === 'F') {
+            $intermediate->update(['father_id' => $link->relative_cattle_id]);
+        }
+
+        if ($lastStep === 'M') {
+            $intermediate->update(['mother_id' => $link->relative_cattle_id]);
+        }
+
+        CattleGenealogyLink::updateOrCreate(
+            [
+                'cattle_id' => $intermediate->id,
+                'lineage_path' => $lastStep,
+            ],
+            [
+                'relative_cattle_id' => $link->relative_cattle_id,
+                'relation_type' => $lastStep === 'F' ? 'father' : 'mother',
+                'generation_level' => 1,
+                'relative_code' => $link->relative_code,
+                'relative_name' => $link->relative_name,
+                'breed_id' => $link->breed_id,
+                'purity_percentage' => $link->purity_percentage,
+                'notes' => 'Sincronizado desde genealogia de '.$principal->code,
+            ]
+        );
+    }
+
+    private function resolveCattleByLineagePath(Cattle $principal, string $path): ?Cattle
+    {
+        $current = $principal->loadMissing(['father', 'mother']);
+
+        foreach (str_split($path) as $step) {
+            if ($step === 'F') {
+                $current = $current->father;
+            } elseif ($step === 'M') {
+                $current = $current->mother;
+            }
+
+            if (! $current) {
+                return null;
+            }
+
+            $current->loadMissing(['father', 'mother']);
+        }
+
+        return $current;
+    }
+
     private function clearPreviousCattleParentIfNeeded(array $previous, array $newData): void
     {
         if (
@@ -665,8 +846,12 @@ class CattleGenealogyLinkController extends Controller
         return $path ? Storage::disk('public')->url($path) : null;
     }
 
-    private function relationLabel(string $type): string
+    private function relationLabel(string $type, ?string $lineagePath = null): string
     {
+        if ($type === 'lineage' && $lineagePath) {
+            return $this->lineagePathLabel($lineagePath);
+        }
+
         return match ($type) {
             'father' => 'Padre',
             'mother' => 'Madre',
@@ -674,24 +859,28 @@ class CattleGenealogyLinkController extends Controller
             'paternal_grandmother' => 'Abuela paterna',
             'maternal_grandfather' => 'Abuelo materno',
             'maternal_grandmother' => 'Abuela materna',
-            default => 'Relación',
+            default => 'Relacion',
         };
     }
 
     private function generationLabel(int $level): string
     {
         return match ($level) {
-            1 => '1ra generación',
-            2 => '2da generación',
-            3 => '3ra generación',
-            default => $level.'ta generación',
+            1 => '1 Padre / Madre',
+            2 => '2 Abuelos',
+            3 => '3 Bisabuelos',
+            4 => '4 Tatarabuelos',
+            5 => '5 Quinta generacion',
+            6 => '6 Sexta generacion',
+            default => $level.' generacion',
         };
     }
 
-    private function relationBadge(string $type): string
+    private function relationBadge(CattleGenealogyLink $link): string
     {
-        $label = $this->relationLabel($type);
-        $class = in_array($type, ['father', 'mother'], true) ? 'success' : 'info';
+        $path = $this->linkLineagePath($link);
+        $label = $this->relationLabel($link->relation_type, $path);
+        $class = in_array($link->relation_type, ['father', 'mother'], true) ? 'success' : 'info';
 
         return '<span class="badge badge-'.$class.'">'.$label.'</span>';
     }
@@ -699,5 +888,64 @@ class CattleGenealogyLinkController extends Controller
     private function generationBadge(int $level): string
     {
         return '<span class="badge badge-light border">'.$this->generationLabel($level).'</span>';
+    }
+
+    private function lineagePathBadge(?string $path): string
+    {
+        if (! $path) {
+            return '<span class="badge badge-secondary">Sin ruta</span>';
+        }
+
+        return '<span class="badge badge-warning">Linea '.e($path).'</span>';
+    }
+
+    private function legacyRelationToPath(?string $relationType): ?string
+    {
+        return self::LEGACY_RELATION_PATHS[$relationType] ?? null;
+    }
+
+    private function linkLineagePath(CattleGenealogyLink $link): ?string
+    {
+        return $link->lineage_path ?: $this->legacyRelationToPath($link->relation_type);
+    }
+
+    private function lineagePathLabel(?string $path): string
+    {
+        if (! $path) {
+            return 'Relacion';
+        }
+
+        $labels = [
+            'F' => 'Padre',
+            'M' => 'Madre',
+            'FF' => 'Abuelo paterno',
+            'FM' => 'Abuela paterna',
+            'MF' => 'Abuelo materno',
+            'MM' => 'Abuela materna',
+        ];
+
+        if (isset($labels[$path])) {
+            return $labels[$path];
+        }
+
+        return collect(str_split($path))
+            ->map(fn (string $letter) => $letter === 'F' ? 'Padre' : 'Madre')
+            ->implode(' de ');
+    }
+
+    private function maxGenerationLevel(): int
+    {
+        return (int) config('peruasocebu.max_genealogy_generation', 6);
+    }
+
+    private function generationOptions(int $maxGenerationLevel): array
+    {
+        $options = [];
+
+        for ($level = 1; $level <= $maxGenerationLevel; $level++) {
+            $options[$level] = $this->generationLabel($level);
+        }
+
+        return $options;
     }
 }

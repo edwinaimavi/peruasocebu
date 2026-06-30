@@ -460,6 +460,91 @@ it('devuelve detalle completo', function () {
         ->assertJsonPath('genealogy.cattle_owner_name', 'Carlos Mendoza');
 });
 
+it('permite registrar linaje dinamico hasta sexta generacion', function () {
+    $maleAncestor = Cattle::create([
+        'code' => 'CE-000060',
+        'name' => 'Ancestro Sexta Linea',
+        'breed_id' => $this->breed->id,
+        'ranch_id' => $this->ranch->id,
+        'sex' => 'male',
+        'birth_date' => '2008-01-01',
+        'status' => 'active',
+        'sale_status' => 'not_available',
+    ]);
+
+    foreach ([4 => 'FMMF', 5 => 'MFMFF', 6 => 'MMMMMF'] as $level => $path) {
+        $this->postJson(route('admin.cattle-genealogy.store'), [
+            'cattle_id' => $this->mainCattle->id,
+            'relative_cattle_id' => $maleAncestor->id,
+            'relation_type' => 'lineage',
+            'lineage_path' => $path,
+            'generation_level' => $level,
+        ])->assertOk();
+
+        $link = CattleGenealogyLink::where('lineage_path', $path)->firstOrFail();
+
+        expect($link->relation_type)->toBe('lineage')
+            ->and($link->generation_level)->toBe($level);
+
+        $link->delete();
+    }
+
+    $this->mainCattle->refresh();
+    expect($this->mainCattle->father_id)->toBeNull()
+        ->and($this->mainCattle->mother_id)->toBeNull();
+});
+
+it('valida duplicado de posicion y sexo por ultima letra del linaje', function () {
+    $femaleAncestor = Cattle::create([
+        'code' => 'CE-000061',
+        'name' => 'Ancestro Hembra',
+        'breed_id' => $this->breed->id,
+        'ranch_id' => $this->ranch->id,
+        'sex' => 'female',
+        'birth_date' => '2008-01-01',
+        'status' => 'active',
+        'sale_status' => 'not_available',
+    ]);
+
+    CattleGenealogyLink::create([
+        'cattle_id' => $this->mainCattle->id,
+        'relative_cattle_id' => $this->father->id,
+        'relation_type' => 'lineage',
+        'lineage_path' => 'FMMF',
+        'generation_level' => 4,
+        'relative_code' => $this->father->code,
+        'relative_name' => $this->father->name,
+    ]);
+
+    $this->postJson(route('admin.cattle-genealogy.store'), [
+        'cattle_id' => $this->mainCattle->id,
+        'relative_cattle_id' => $this->father->id,
+        'relation_type' => 'lineage',
+        'lineage_path' => 'FMMF',
+        'generation_level' => 4,
+    ])->assertUnprocessable()
+        ->assertJsonValidationErrors(['lineage_path'])
+        ->assertJsonPath('errors.lineage_path.0', 'Ya existe un familiar registrado para esa posicion del linaje.');
+
+    $this->postJson(route('admin.cattle-genealogy.store'), [
+        'cattle_id' => $this->mainCattle->id,
+        'relative_cattle_id' => $femaleAncestor->id,
+        'relation_type' => 'lineage',
+        'lineage_path' => 'MFF',
+        'generation_level' => 3,
+    ])->assertUnprocessable()
+        ->assertJsonValidationErrors(['relative_cattle_id'])
+        ->assertJsonPath('errors.relative_cattle_id.0', 'La posicion de linaje seleccionada requiere un animal macho.');
+
+    $this->postJson(route('admin.cattle-genealogy.store'), [
+        'cattle_id' => $this->mainCattle->id,
+        'relative_cattle_id' => $femaleAncestor->id,
+        'relation_type' => 'lineage',
+        'lineage_path' => 'MFM',
+        'generation_level' => 3,
+    ])->assertOk();
+});
+
 it('valida familiar distinto, campos obligatorios y duplicados', function () {
     $this->postJson(route('admin.cattle-genealogy.store'), [
         'cattle_id' => $this->mainCattle->id,

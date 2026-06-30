@@ -1,100 +1,218 @@
-<!doctype html>
-<html lang="es">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Verificacion de certificado | PERU ASOCEBU</title>
-    <link rel="stylesheet" href="{{ asset('vendor/adminlte/dist/css/adminlte.min.css') }}">
+@extends('public.layouts.app')
+
+@section('title', 'Verificacion de Certificado | PERU ASOCEBU')
+@section('meta_description', 'Consulta publica de autenticidad documental, trazabilidad y respaldo ganadero de PERU ASOCEBU.')
+@section('main_class', 'certificate-verify-page')
+
+@push('styles')
     <link rel="stylesheet" href="{{ asset('vendor/fontawesome-free/css/all.min.css') }}">
-    <style>
-        body { background: #f3f7f4; color: #26372d; }
-        .verify-wrap { margin: 0 auto; max-width: 980px; padding: 32px 16px; }
-        .verify-header { background: #1f4d36; border-radius: 12px; color: #fff; padding: 28px; }
-        .verify-card { border: 0; border-radius: 10px; box-shadow: 0 12px 30px rgba(31, 77, 54, .12); }
-        .verify-label { color: #6c757d; font-size: .76rem; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; }
-        .verify-value { font-size: 1rem; margin-bottom: 14px; word-break: break-word; }
-    </style>
-</head>
-<body>
-    <main class="verify-wrap">
-        <section class="verify-header mb-4">
-            <div class="d-flex align-items-center justify-content-between flex-wrap">
-                <div>
-                    <div class="text-uppercase small font-weight-bold">PERU ASOCEBU</div>
-                    <h1 class="h3 mb-1">Verificacion de certificado</h1>
-                    <div>Consulta publica de autenticidad documental.</div>
-                </div>
-                <i class="fas fa-certificate fa-3x mt-3 mt-md-0"></i>
+@endpush
+
+@section('content')
+    @php
+        $statusConfig = [
+            'issued' => [
+                'class' => 'verify-status-issued',
+                'label' => 'Certificado emitido',
+                'message' => 'El certificado se encuentra vigente y registrado en la plataforma.',
+                'icon' => 'fas fa-check-circle',
+            ],
+            'cancelled' => [
+                'class' => 'verify-status-cancelled',
+                'label' => 'Certificado anulado',
+                'message' => 'Este certificado fue anulado y no debe considerarse valido.',
+                'icon' => 'fas fa-times-circle',
+            ],
+            'expired' => [
+                'class' => 'verify-status-expired',
+                'label' => 'Certificado vencido',
+                'message' => 'Este certificado se encuentra vencido.',
+                'icon' => 'fas fa-clock',
+            ],
+        ];
+
+        $currentStatus = $certificate ? ($statusConfig[$certificate->status] ?? $statusConfig['expired']) : null;
+        $owner = $certificate?->owner;
+        $ranch = $certificate?->ranch;
+        $cattle = $certificate?->cattle;
+        $veterinarian = $certificate?->veterinarian;
+        $ownerName = $owner?->owner_type === 'company' && $owner?->business_name ? $owner->business_name : $owner?->full_name;
+        $ranchName = $ranch?->business_name ?: $ranch?->name;
+        $cattleOwnerName = $cattle?->currentOwner?->owner_type === 'company' && $cattle?->currentOwner?->business_name
+            ? $cattle->currentOwner->business_name
+            : $cattle?->currentOwner?->full_name;
+        $cattlePhoto = $cattle?->main_photo_path ? \Illuminate\Support\Facades\Storage::url($cattle->main_photo_path) : null;
+        $qrUrl = $certificate?->qr_code_path ? \Illuminate\Support\Facades\Storage::url($certificate->qr_code_path) : null;
+        $pdfUrl = $certificate?->pdf_path ? \Illuminate\Support\Facades\Storage::url($certificate->pdf_path) : null;
+        $veterinarianSignatureUrl = $veterinarian?->signature_path ? \Illuminate\Support\Facades\Storage::url($veterinarian->signature_path) : null;
+        $cattleRanchName = $cattle?->ranch?->business_name ?: $cattle?->ranch?->name;
+        $sexLabel = match ($cattle?->sex) {
+            'male' => 'Macho',
+            'female' => 'Hembra',
+            default => 'No registrado',
+        };
+    @endphp
+
+    <section class="verify-container">
+        <div class="verify-hero">
+            <div class="verify-hero-copy">
+                <span class="verify-eyebrow">PERU ASOCEBU</span>
+                <h1>Verificacion de certificado</h1>
+                <p>Consulta publica de autenticidad documental, trazabilidad y respaldo ganadero.</p>
             </div>
-        </section>
+
+            <div class="verify-seal" aria-hidden="true">
+                <i class="fas fa-certificate"></i>
+            </div>
+        </div>
 
         @if (! $certificate)
-            <div class="alert alert-danger verify-card">
-                <h2 class="h5 mb-2">Certificado no encontrado</h2>
-                <p class="mb-0">El codigo ingresado no corresponde a un certificado registrado.</p>
+            <div class="verify-empty-card">
+                <div class="verify-empty-icon" aria-hidden="true">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <span class="verify-eyebrow">Consulta sin resultado</span>
+                <h2>Certificado no encontrado</h2>
+                <p>No se encontro ningun certificado con el codigo ingresado.</p>
+                <div class="verify-actions-row">
+                    <a class="verify-action-btn" href="{{ route('public.home') }}">Volver al inicio</a>
+                    <a class="verify-action-btn secondary" href="{{ route('public.home') }}#consulta">Realizar otra consulta</a>
+                </div>
             </div>
         @else
-            @if ($certificate->status === 'cancelled')
-                <div class="alert alert-danger verify-card">
-                    <strong>Certificado anulado.</strong> Este documento no debe considerarse vigente.
+            <div class="verify-status-card {{ $currentStatus['class'] }}">
+                <div>
+                    <span>{{ $currentStatus['label'] }}</span>
+                    <p>{{ $currentStatus['message'] }}</p>
                 </div>
-            @elseif ($certificate->status === 'expired')
-                <div class="alert alert-warning verify-card">
-                    <strong>Certificado vencido.</strong> Revise la vigencia antes de usarlo.
-                </div>
-            @else
-                <div class="alert alert-success verify-card">
-                    <strong>Certificado emitido.</strong> El codigo fue encontrado en la plataforma.
-                </div>
-            @endif
+                <i class="{{ $currentStatus['icon'] }}" aria-hidden="true"></i>
+            </div>
 
-            <div class="card verify-card">
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="verify-label">Nro. certificado</div>
-                            <div class="verify-value font-weight-bold">{{ $certificate->certificate_number }}</div>
+            <div class="verify-layout">
+                <div class="verify-main-card">
+                    <section class="verify-section">
+                        <h2 class="verify-section-title">
+                            <i class="fas fa-file-contract" aria-hidden="true"></i>
+                            Datos del certificado
+                        </h2>
+                        <div class="verify-grid">
+                            <div class="verify-field"><small>Nro. certificado</small><strong>{{ $certificate->certificate_number ?: 'No registrado' }}</strong></div>
+                            <div class="verify-field"><small>Codigo de verificacion</small><strong>{{ $certificate->verification_code ?: 'No registrado' }}</strong></div>
+                            <div class="verify-field"><small>Tipo</small><strong>{{ $typeLabel ?: 'No registrado' }}</strong></div>
+                            <div class="verify-field"><small>Estado</small><strong>{{ $statusLabel ?: 'No registrado' }}</strong></div>
+                            <div class="verify-field"><small>Fecha de emision</small><strong>{{ $certificate->issue_date?->format('d/m/Y') ?: 'No registrado' }}</strong></div>
+                            <div class="verify-field"><small>Pureza</small><strong>{{ $certificate->purity_percentage !== null ? number_format((float) $certificate->purity_percentage, 2).'%' : 'No registrado' }}</strong></div>
                         </div>
-                        <div class="col-md-6">
-                            <div class="verify-label">Codigo de verificacion</div>
-                            <div class="verify-value">{{ $certificate->verification_code }}</div>
+                    </section>
+
+                    <section class="verify-section">
+                        <h2 class="verify-section-title">
+                            <i class="fas fa-paw" aria-hidden="true"></i>
+                            Ganado certificado
+                        </h2>
+                        <div class="verify-cattle-card">
+                            <div class="verify-cattle-photo">
+                                @if ($cattlePhoto)
+                                    <img src="{{ $cattlePhoto }}" alt="Foto de {{ $cattle?->name ?: $cattle?->code }}">
+                                @else
+                                    <i class="fas fa-paw" aria-hidden="true"></i>
+                                @endif
+                            </div>
+                            <div class="verify-grid verify-grid-two">
+                                <div class="verify-field"><small>Codigo</small><strong>{{ $cattle?->code ?: 'No registrado' }}</strong></div>
+                                <div class="verify-field"><small>Nombre</small><strong>{{ $cattle?->name ?: 'Sin nombre' }}</strong></div>
+                                <div class="verify-field"><small>Raza</small><strong>{{ $cattle?->breed?->name ?: 'No registrado' }}</strong></div>
+                                <div class="verify-field"><small>Sexo</small><strong>{{ $sexLabel }}</strong></div>
+                                <div class="verify-field"><small>Fecha de nacimiento</small><strong>{{ $cattle?->birth_date?->format('d/m/Y') ?: 'No registrado' }}</strong></div>
+                                <div class="verify-field"><small>Criadero / Hacienda</small><strong>{{ $cattleRanchName ?: $ranchName ?: 'No registrado' }}</strong></div>
+                                <div class="verify-field"><small>Propietario actual</small><strong>{{ $cattleOwnerName ?: $ownerName ?: 'No registrado' }}</strong></div>
+                            </div>
                         </div>
-                        <div class="col-md-4">
-                            <div class="verify-label">Estado</div>
-                            <div class="verify-value">{{ $statusLabel }}</div>
+                    </section>
+
+                    <section class="verify-section">
+                        <h2 class="verify-section-title">
+                            <i class="fas fa-users" aria-hidden="true"></i>
+                            Propietario
+                        </h2>
+                        <div class="verify-grid">
+                            <div class="verify-field"><small>Nombre o razon social</small><strong>{{ $ownerName ?: 'No registrado' }}</strong></div>
+                            <div class="verify-field"><small>Documento</small><strong>{{ $owner?->document_number ?: 'No registrado' }}</strong></div>
+                            <div class="verify-field"><small>Telefono</small><strong>{{ $owner?->phone ?: 'No registrado' }}</strong></div>
+                            <div class="verify-field"><small>Correo</small><strong>{{ $owner?->email ?: 'No registrado' }}</strong></div>
                         </div>
-                        <div class="col-md-4">
-                            <div class="verify-label">Tipo</div>
-                            <div class="verify-value">{{ $typeLabel }}</div>
+                    </section>
+
+                    <section class="verify-section">
+                        <h2 class="verify-section-title">
+                            <i class="fas fa-warehouse" aria-hidden="true"></i>
+                            Criadero emisor
+                        </h2>
+                        <div class="verify-grid">
+                            <div class="verify-field"><small>Nombre / razon social</small><strong>{{ $ranchName ?: 'No registrado' }}</strong></div>
+                            <div class="verify-field"><small>Documento / RUC</small><strong>{{ $ranch?->document_number ?: 'No registrado' }}</strong></div>
+                            <div class="verify-field verify-field-wide"><small>Direccion</small><strong>{{ $ranch?->address ?: 'No registrado' }}</strong></div>
                         </div>
-                        <div class="col-md-4">
-                            <div class="verify-label">Fecha emision</div>
-                            <div class="verify-value">{{ $certificate->issue_date?->format('d/m/Y') ?: '-' }}</div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="verify-label">Ganado certificado</div>
-                            <div class="verify-value">{{ $certificate->cattle?->code }} - {{ $certificate->cattle?->name ?: 'Sin nombre' }}</div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="verify-label">Raza</div>
-                            <div class="verify-value">{{ $certificate->cattle?->breed?->name ?: '-' }}</div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="verify-label">Pureza</div>
-                            <div class="verify-value">{{ $certificate->purity_percentage !== null ? number_format((float) $certificate->purity_percentage, 2).'%' : '-' }}</div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="verify-label">Criadero emisor</div>
-                            <div class="verify-value">{{ $certificate->ranch?->business_name ?: ($certificate->ranch?->name ?: '-') }}</div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="verify-label">Propietario</div>
-                            <div class="verify-value">{{ $certificate->owner?->business_name ?: ($certificate->owner?->full_name ?: '-') }}</div>
-                        </div>
-                    </div>
+                    </section>
+
+                    <section class="verify-section">
+                        <h2 class="verify-section-title">
+                            <i class="fas fa-user-md" aria-hidden="true"></i>
+                            Veterinario / certificador
+                        </h2>
+                        @if ($veterinarian)
+                            <div class="verify-grid">
+                                <div class="verify-field"><small>Nombre</small><strong>{{ $veterinarian->full_name ?: 'No registrado' }}</strong></div>
+                                <div class="verify-field"><small>Colegiatura</small><strong>{{ $veterinarian->license_number ?: 'No registrado' }}</strong></div>
+                                <div class="verify-field"><small>Especialidad</small><strong>{{ $veterinarian->specialty ?: 'No registrado' }}</strong></div>
+                                <div class="verify-field verify-field-wide">
+                                    <small>Firma</small>
+                                    @if ($veterinarianSignatureUrl)
+                                        <img class="verify-signature" src="{{ $veterinarianSignatureUrl }}" alt="Firma de {{ $veterinarian->full_name }}">
+                                    @else
+                                        <strong>No registrado</strong>
+                                    @endif
+                                </div>
+                            </div>
+                        @else
+                            <div class="verify-note">Sin certificador asignado</div>
+                        @endif
+                    </section>
                 </div>
+
+                <aside class="verify-side-card">
+                    <div class="verify-side-heading">
+                        <span>Validacion digital</span>
+                        <strong>{{ $certificate->verification_code }}</strong>
+                    </div>
+
+                    <div class="verify-qr-box">
+                        @if ($qrUrl)
+                            <img src="{{ $qrUrl }}" alt="QR de verificacion del certificado {{ $certificate->certificate_number }}">
+                            <span>QR de verificacion</span>
+                        @else
+                            <div class="verify-qr-placeholder">
+                                <i class="fas fa-qrcode" aria-hidden="true"></i>
+                                <span>QR no registrado</span>
+                            </div>
+                        @endif
+                    </div>
+
+                    @if ($pdfUrl)
+                        <a class="verify-action-btn" href="{{ $pdfUrl }}" target="_blank" rel="noopener">
+                            <i class="fas fa-file-pdf" aria-hidden="true"></i>
+                            Ver certificado PDF
+                        </a>
+                    @endif
+                    <a class="verify-action-btn secondary" href="{{ route('public.home') }}#consulta">Nueva consulta</a>
+                    <a class="verify-action-btn ghost" href="{{ route('public.home') }}">Volver al inicio</a>
+
+                    <div class="verify-side-note">
+                        <strong>Documento verificable</strong>
+                        <p>La informacion mostrada corresponde al registro publico asociado al codigo de verificacion.</p>
+                    </div>
+                </aside>
             </div>
         @endif
-    </main>
-</body>
-</html>
+    </section>
+@endsection

@@ -12,7 +12,7 @@ class Breed extends Model
 
     protected $fillable = [
         'name', 'code', 'description', 'origin_country', 'characteristics',
-        'status',
+        'image_path', 'status',
     ];
 
     protected array $decodedTextAttributes = [

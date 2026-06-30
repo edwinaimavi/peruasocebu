@@ -24,8 +24,8 @@
                     <div id="genealogy-error-messages" class="alert alert-danger d-none"></div>
                     <div class="alert alert-info border-0 shadow-sm mb-3">
                         <i class="fas fa-info-circle mr-1"></i>
-                        Ejemplo: si Bella Gyr será madre de Romulo, selecciona Romulo como animal principal,
-                        relación Madre y Bella Gyr como familiar.
+                        Ejemplo: si Titán será abuelo paterno de Rómulo, selecciona Rómulo como animal principal,
+                        ubicación FF - Abuelo paterno y Titán como familiar.
                     </div>
 
                     <div class="card border-0 rounded-lg shadow-sm mb-3">
@@ -53,31 +53,37 @@
                                     <div class="invalid-feedback" id="cattle_id-error"></div>
                                 </div>
                                 <div class="form-group col-md-3">
-                                    <label class="small font-weight-bold text-secondary" for="relation_type">
-                                        Relación <span class="text-danger">*</span>
+                                    <label class="small font-weight-bold text-secondary" for="lineage_path">
+                                        Ubicación dentro del linaje <span class="text-danger">*</span>
                                     </label>
-                                    <select class="form-control form-control-sm" id="relation_type" name="relation_type" required>
-                                        <option value="">Seleccione</option>
-                                        <option value="father">Padre</option>
-                                        <option value="mother">Madre</option>
-                                        <option value="paternal_grandfather">Abuelo paterno</option>
-                                        <option value="paternal_grandmother">Abuela paterna</option>
-                                        <option value="maternal_grandfather">Abuelo materno</option>
-                                        <option value="maternal_grandmother">Abuela materna</option>
+                                    <input id="relation_type" name="relation_type" type="hidden" value="father">
+                                    <select class="form-control form-control-sm" id="lineage_path" name="lineage_path" required>
+                                        <option value="">Seleccione la ruta</option>
                                     </select>
+                                    <small class="form-text text-muted">
+                                        F = padre, M = madre. Por ejemplo: FF significa padre del padre y MF significa padre de la madre.
+                                    </small>
+                                    <div class="genealogy-lineage-help mt-2" id="lineagePathHelp"></div>
+                                    <div class="invalid-feedback" id="lineage_path-error"></div>
                                     <div class="invalid-feedback" id="relation_type-error"></div>
                                 </div>
                                 <div class="form-group col-md-3">
                                     <label class="small font-weight-bold text-secondary" for="generation_level">
-                                        Generación <span class="text-danger">*</span>
+                                        Generacion <span class="text-danger">*</span>
                                     </label>
                                     <select class="form-control form-control-sm" id="generation_level" name="generation_level" required>
-                                        <option value="1">1 Padre / Madre</option>
-                                        <option value="2">2 Abuelos</option>
-                                        <option value="3">3 Bisabuelos</option>
+                                        @foreach ($generationOptions as $level => $label)
+                                            <option value="{{ $level }}">{{ $label }}</option>
+                                        @endforeach
                                     </select>
                                     <div class="invalid-feedback" id="generation_level-error"></div>
                                 </div>
+                            </div>
+                            <div class="genealogy-relation-preview d-none" id="lineageRelationPreview">
+                                <div class="genealogy-relation-preview-title">
+                                    <i class="fas fa-project-diagram"></i> Relación resultante
+                                </div>
+                                <div id="lineageRelationPreviewText"></div>
                             </div>
                         </div>
                     </div>

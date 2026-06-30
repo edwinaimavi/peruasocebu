@@ -145,7 +145,15 @@ class CattleController extends Controller
             'ranch',
             'currentOwner',
             'father.breed',
+            'father.father.breed',
+            'father.mother.breed',
+            'father.genealogyLinks.breed',
+            'father.genealogyLinks.relativeCattle.breed',
             'mother.breed',
+            'mother.father.breed',
+            'mother.mother.breed',
+            'mother.genealogyLinks.breed',
+            'mother.genealogyLinks.relativeCattle.breed',
             'photos',
             'ownershipHistories.owner',
             'sales.seller',
@@ -161,12 +169,14 @@ class CattleController extends Controller
             'certificates',
             'genealogyLinks' => fn ($query) => $query
                 ->with(['breed', 'relativeCattle.breed'])
-                ->whereIn('relation_type', ['father', 'mother'])
+                ->orderBy('generation_level')
+                ->orderBy('lineage_path')
                 ->oldest('id'),
         ]);
 
         $manualFather = $this->manualParentLink($cattle, 'father');
         $manualMother = $this->manualParentLink($cattle, 'mother');
+        $genealogyTree = $this->buildGenealogyTree($cattle);
         $birthDate = $cattle->birth_date;
         $ageText = $this->calculateAgeText($birthDate);
 
@@ -290,6 +300,7 @@ class CattleController extends Controller
                 'father_breed_name' => $cattle->father?->breed?->name ?: $this->manualParentBreedName($manualFather),
                 'mother_label' => $this->parentLabel($cattle->mother) ?: $this->manualParentLabel($manualMother),
                 'mother_breed_name' => $cattle->mother?->breed?->name ?: $this->manualParentBreedName($manualMother),
+                'genealogy_tree' => $genealogyTree,
                 'sex_label' => $this->sexLabel($cattle->sex),
                 'status_label' => $this->statusLabel($cattle->status),
                 'sale_status_label' => $this->saleStatusLabel($cattle->sale_status),
@@ -852,11 +863,165 @@ class CattleController extends Controller
         return trim($cattle->code.' - '.($cattle->name ?: 'Sin nombre'));
     }
 
+    private function buildGenealogyTree(Cattle $cattle): array
+    {
+        $tree = collect();
+
+        $cattle->genealogyLinks->each(function (CattleGenealogyLink $link) use ($tree): void {
+            $path = $link->lineage_path ?: $this->legacyRelationToPath($link->relation_type);
+
+            if (! $path) {
+                return;
+            }
+
+            $path = strtoupper($path);
+
+            $tree->put($path, [
+                'id' => $link->id,
+                'path' => $path,
+                'level' => strlen($path),
+                'label' => $this->lineagePathLabel($path),
+                'code' => $link->relativeCattle?->code ?? $link->relative_code,
+                'name' => $link->relativeCattle?->name ?? $link->relative_name,
+                'breed' => $link->relativeCattle?->breed?->name ?? $link->breed?->name,
+                'purity' => $link->relativeCattle?->purity_percentage ?? $link->purity_percentage,
+                'photo_url' => $link->relativeCattle
+                    ? $this->mainPhotoUrl($link->relativeCattle->main_photo_path)
+                    : null,
+                'is_registered' => (bool) $link->relative_cattle_id,
+            ]);
+        });
+
+        if ($cattle->father && ! $tree->has('F')) {
+            $tree->put('F', $this->registeredParentTreeNode($cattle->father, 'F', 'Padre'));
+        }
+
+        if ($cattle->mother && ! $tree->has('M')) {
+            $tree->put('M', $this->registeredParentTreeNode($cattle->mother, 'M', 'Madre'));
+        }
+
+        $this->addResolvedGenealogyNode($tree, 'FF', 'Abuelo paterno', $cattle->father?->father);
+        $this->addResolvedGenealogyNode($tree, 'FM', 'Abuela paterna', $cattle->father?->mother);
+        $this->addResolvedGenealogyNode($tree, 'MF', 'Abuelo materno', $cattle->mother?->father);
+        $this->addResolvedGenealogyNode($tree, 'MM', 'Abuela materna', $cattle->mother?->mother);
+        $this->addParentGenealogyLinks($tree, $cattle->father, 'F');
+        $this->addParentGenealogyLinks($tree, $cattle->mother, 'M');
+
+        return $tree
+            ->sortBy([
+                ['level', 'asc'],
+                ['path', 'asc'],
+            ])
+            ->values()
+            ->all();
+    }
+
+    private function addResolvedGenealogyNode($tree, string $path, string $label, ?Cattle $relative): void
+    {
+        if (! $relative || $tree->has($path)) {
+            return;
+        }
+
+        $tree->put($path, array_merge($this->registeredParentTreeNode($relative, $path, $label), [
+            'source' => 'resolved_from_parent',
+        ]));
+    }
+
+    private function addParentGenealogyLinks($tree, ?Cattle $parent, string $prefix): void
+    {
+        if (! $parent) {
+            return;
+        }
+
+        $parent->loadMissing(['genealogyLinks.breed', 'genealogyLinks.relativeCattle.breed']);
+
+        $parent->genealogyLinks
+            ->filter(function (CattleGenealogyLink $link) {
+                return in_array($link->lineage_path ?: $this->legacyRelationToPath($link->relation_type), ['F', 'M'], true);
+            })
+            ->each(function (CattleGenealogyLink $link) use ($tree, $prefix): void {
+                $parentPath = $link->lineage_path ?: $this->legacyRelationToPath($link->relation_type);
+                $path = $prefix.$parentPath;
+
+                if ($tree->has($path)) {
+                    return;
+                }
+
+                $tree->put($path, [
+                    'id' => $link->id,
+                    'path' => $path,
+                    'level' => strlen($path),
+                    'label' => $this->lineagePathLabel($path),
+                    'code' => $link->relativeCattle?->code ?? $link->relative_code,
+                    'name' => $link->relativeCattle?->name ?? $link->relative_name,
+                    'breed' => $link->relativeCattle?->breed?->name ?? $link->breed?->name,
+                    'purity' => $link->relativeCattle?->purity_percentage ?? $link->purity_percentage,
+                    'photo_url' => $link->relativeCattle
+                        ? $this->mainPhotoUrl($link->relativeCattle->main_photo_path)
+                        : null,
+                    'is_registered' => (bool) $link->relative_cattle_id,
+                    'source' => 'resolved_from_parent_genealogy_link',
+                ]);
+            });
+    }
+
+    private function registeredParentTreeNode(Cattle $parent, string $path, string $label): array
+    {
+        return [
+            'id' => null,
+            'path' => $path,
+            'level' => strlen($path),
+            'label' => $label,
+            'code' => $parent->code,
+            'name' => $parent->name,
+            'breed' => $parent->breed?->name,
+            'purity' => $parent->purity_percentage,
+            'photo_url' => $this->mainPhotoUrl($parent->main_photo_path),
+            'is_registered' => true,
+        ];
+    }
+
+    private function legacyRelationToPath(?string $relationType): ?string
+    {
+        return match ($relationType) {
+            'father' => 'F',
+            'mother' => 'M',
+            'paternal_grandfather' => 'FF',
+            'paternal_grandmother' => 'FM',
+            'maternal_grandfather' => 'MF',
+            'maternal_grandmother' => 'MM',
+            default => null,
+        };
+    }
+
+    private function lineagePathLabel(?string $path): string
+    {
+        if (! $path) {
+            return 'Familiar';
+        }
+
+        return match ($path) {
+            'F' => 'Padre',
+            'M' => 'Madre',
+            'FF' => 'Abuelo paterno',
+            'FM' => 'Abuela paterna',
+            'MF' => 'Abuelo materno',
+            'MM' => 'Abuela materna',
+            default => 'Generación '.strlen($path).' - Línea '.$path,
+        };
+    }
+
     private function syncGenealogyParent(Cattle $cattle, string $relationType, ?int $relativeCattleId): void
     {
+        $lineagePath = $relationType === 'father' ? 'F' : 'M';
         $link = CattleGenealogyLink::query()
             ->where('cattle_id', $cattle->id)
-            ->where('relation_type', $relationType)
+            ->where(function ($query) use ($relationType, $lineagePath) {
+                $query->where('lineage_path', $lineagePath)
+                    ->orWhere(function ($legacyQuery) use ($relationType) {
+                        $legacyQuery->whereNull('lineage_path')->where('relation_type', $relationType);
+                    });
+            })
             ->oldest('id')
             ->first();
 
@@ -882,6 +1047,7 @@ class CattleController extends Controller
 
         $data = [
             'relative_cattle_id' => $relative->id,
+            'lineage_path' => $lineagePath,
             'generation_level' => 1,
             'relative_code' => $relative->code,
             'relative_name' => $relative->name,

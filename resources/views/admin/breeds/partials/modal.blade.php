@@ -67,17 +67,38 @@
                             </div>
 
                             <div class="form-group">
+                                <label class="small font-weight-bold text-secondary" for="breed_image">
+                                    Imagen de la raza
+                                </label>
+                                <div class="breed-image-upload-card">
+                                    <div class="breed-image-preview" id="breedImagePreview">
+                                        <i class="fas fa-cow"></i>
+                                        <span>Sin imagen</span>
+                                    </div>
+                                    <div class="breed-image-upload-actions">
+                                        <label class="btn btn-light border btn-sm mb-1" for="breed_image">
+                                            <i class="fas fa-image mr-1"></i> Seleccionar imagen
+                                        </label>
+                                        <small class="text-muted d-block">JPG, PNG o WEBP. Maximo 4 MB.</small>
+                                    </div>
+                                </div>
+                                <input class="d-none" id="breed_image" name="image" type="file"
+                                    accept="image/jpeg,image/png,image/webp">
+                                <div class="invalid-feedback d-block" id="image-error"></div>
+                            </div>
+
+                            <div class="form-group">
                                 <label class="small font-weight-bold text-secondary"
-                                    for="description">Descripción</label>
-                                <textarea class="form-control form-control-sm" id="description" name="description"
+                                    for="breed_description">Descripción</label>
+                                <textarea class="form-control form-control-sm" id="breed_description" name="description"
                                     rows="4" placeholder="Origen, propósito productivo o descripción general"></textarea>
                                 <div class="invalid-feedback" id="description-error"></div>
                             </div>
 
                             <div class="form-group mb-0">
                                 <label class="small font-weight-bold text-secondary"
-                                    for="characteristics">Características</label>
-                                <textarea class="form-control form-control-sm" id="characteristics" name="characteristics"
+                                    for="breed_characteristics">Características</label>
+                                <textarea class="form-control form-control-sm" id="breed_characteristics" name="characteristics"
                                     rows="4" placeholder="Características físicas, productivas o reproductivas"></textarea>
                                 <div class="invalid-feedback" id="characteristics-error"></div>
                             </div>

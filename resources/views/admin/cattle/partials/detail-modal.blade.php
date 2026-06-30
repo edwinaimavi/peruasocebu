@@ -18,6 +18,43 @@
             </div>
 
             <div class="modal-body p-3">
+                <div class="cattle-detail-tabs-wrapper">
+                    <ul class="nav nav-tabs cattle-detail-tabs" id="cattleDetailTabs" role="tablist">
+                        <li class="nav-item">
+                            <a class="nav-link active" id="summary-tab" data-toggle="tab" href="#cattleSummaryTab" role="tab">
+                                <i class="fas fa-info-circle"></i> Resumen
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" id="genealogy-tab" data-toggle="tab" href="#cattleGenealogyTab" role="tab">
+                                <i class="fas fa-sitemap"></i> Genealogía
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" id="ownership-tab" data-toggle="tab" href="#cattleOwnershipTab" role="tab">
+                                <i class="fas fa-history"></i> Propiedad y ventas
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" id="health-tab" data-toggle="tab" href="#cattleHealthTab" role="tab">
+                                <i class="fas fa-notes-medical"></i> Sanidad
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" id="production-tab" data-toggle="tab" href="#cattleProductionTab" role="tab">
+                                <i class="fas fa-chart-line"></i> Producción y reproducción
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" id="documents-tab" data-toggle="tab" href="#cattleDocumentsTab" role="tab">
+                                <i class="fas fa-certificate"></i> Certificados y fotos
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="tab-content cattle-detail-tab-content" id="cattleDetailTabContent">
+                    <div class="tab-pane fade show active" id="cattleSummaryTab" role="tabpanel">
                 <div class="cattle-detail-hero p-3 mb-3">
                     <div class="cattle-detail-photo-wrap">
                         <img id="detailMainPhoto" class="cattle-detail-photo d-none" src=""
@@ -107,11 +144,27 @@
                         </div>
                     </div>
                 </div>
+                    </div>
+
+                    <div class="tab-pane fade" id="cattleGenealogyTab" role="tabpanel">
 
                 <div class="cattle-genealogy-card p-3">
-                    <div class="cattle-section-title mb-3">
-                        <i class="fas fa-dna"></i> Genealogía básica
+                    <div class="d-flex align-items-center justify-content-between flex-wrap mb-3">
+                        <div class="cattle-section-title mb-0">
+                            <i class="fas fa-dna"></i> Árbol genealógico
+                        </div>
+                        @can('admin.cattle-genealogy.store')
+                            <div class="cattle-detail-tab-actions">
+                                <a class="btn btn-outline-primary btn-xs d-none" id="detailAddFatherLink" href="#">
+                                    <i class="fas fa-plus mr-1"></i> Agregar padre
+                                </a>
+                                <a class="btn btn-outline-primary btn-xs d-none" id="detailAddMotherLink" href="#">
+                                    <i class="fas fa-plus mr-1"></i> Agregar madre
+                                </a>
+                            </div>
+                        @endcan
                     </div>
+                    <div id="cattleGenealogyTree" class="cattle-genealogy-tree"></div>
                     <div class="cattle-genealogy-grid">
                         <div class="card border-0 shadow-sm cattle-genealogy-parent-card">
                             <div class="card-body">
@@ -119,7 +172,7 @@
                                 <div class="cattle-detail-value font-weight-bold" id="detailFather">No registrado</div>
                                 <div class="text-muted small mt-1 cattle-detail-value" id="detailFatherBreed">—</div>
                                 @can('admin.cattle-genealogy.store')
-                                    <a class="btn btn-outline-primary btn-xs mt-3 d-none" id="detailAddFatherLink" href="#">
+                                    <a class="btn btn-outline-primary btn-xs mt-3 d-none" id="detailAddFatherLinkFallback" href="#">
                                         <i class="fas fa-plus mr-1"></i> Agregar padre
                                     </a>
                                 @endcan
@@ -131,7 +184,7 @@
                                 <div class="cattle-detail-value font-weight-bold" id="detailMother">No registrado</div>
                                 <div class="text-muted small mt-1 cattle-detail-value" id="detailMotherBreed">—</div>
                                 @can('admin.cattle-genealogy.store')
-                                    <a class="btn btn-outline-primary btn-xs mt-3 d-none" id="detailAddMotherLink" href="#">
+                                    <a class="btn btn-outline-primary btn-xs mt-3 d-none" id="detailAddMotherLinkFallback" href="#">
                                         <i class="fas fa-plus mr-1"></i> Agregar madre
                                     </a>
                                 @endcan
@@ -139,6 +192,9 @@
                         </div>
                     </div>
                 </div>
+                    </div>
+
+                    <div class="tab-pane fade" id="cattleOwnershipTab" role="tabpanel">
 
                 <div class="cattle-genealogy-card p-3 mt-3">
                     <div class="d-flex align-items-center justify-content-between flex-wrap mb-3">
@@ -175,24 +231,9 @@
                         <div>Este ganado aun no tiene ventas registradas.</div>
                     </div>
                 </div>
+                    </div>
 
-                <div class="cattle-gallery-card p-3 mt-3">
-                    <div class="d-flex align-items-center justify-content-between flex-wrap mb-3">
-                        <div class="cattle-section-title mb-0">
-                            <i class="fas fa-certificate"></i> Certificados
-                        </div>
-                        @can('admin.certificates.store')
-                            <a class="btn btn-outline-primary btn-sm" id="detailAddCertificateLink" href="#">
-                                <i class="fas fa-plus mr-1"></i> Nuevo certificado
-                            </a>
-                        @endcan
-                    </div>
-                    <div id="detailCertificatesList" class="cattle-detail-grid"></div>
-                    <div id="detailCertificatesEmpty" class="text-center text-muted py-4 d-none">
-                        <i class="fas fa-certificate fa-2x mb-2"></i>
-                        <div>Este ganado aun no tiene certificados registrados.</div>
-                    </div>
-                </div>
+                    <div class="tab-pane fade" id="cattleHealthTab" role="tabpanel">
 
                 <div class="cattle-gallery-card p-3 mt-3">
                     <div class="d-flex align-items-center justify-content-between flex-wrap mb-3">
@@ -247,6 +288,9 @@
                         <div>Este ganado aun no tiene tratamientos medicos registrados.</div>
                     </div>
                 </div>
+                    </div>
+
+                    <div class="tab-pane fade" id="cattleProductionTab" role="tabpanel">
 
                 <div class="cattle-gallery-card p-3 mt-3">
                     <div class="d-flex align-items-center justify-content-between flex-wrap mb-3">
@@ -292,6 +336,27 @@
                         <div>No registra participaciones como reproductor.</div>
                     </div>
                 </div>
+                    </div>
+
+                    <div class="tab-pane fade" id="cattleDocumentsTab" role="tabpanel">
+
+                <div class="cattle-gallery-card p-3 mt-3">
+                    <div class="d-flex align-items-center justify-content-between flex-wrap mb-3">
+                        <div class="cattle-section-title mb-0">
+                            <i class="fas fa-certificate"></i> Certificados
+                        </div>
+                        @can('admin.certificates.store')
+                            <a class="btn btn-outline-primary btn-sm" id="detailAddCertificateLink" href="#">
+                                <i class="fas fa-plus mr-1"></i> Nuevo certificado
+                            </a>
+                        @endcan
+                    </div>
+                    <div id="detailCertificatesList" class="cattle-detail-grid"></div>
+                    <div id="detailCertificatesEmpty" class="text-center text-muted py-4 d-none">
+                        <i class="fas fa-certificate fa-2x mb-2"></i>
+                        <div>Este ganado aun no tiene certificados registrados.</div>
+                    </div>
+                </div>
 
                 <div class="cattle-gallery-card p-3 mt-3">
                     <div class="d-flex align-items-center justify-content-between flex-wrap mb-3">
@@ -308,6 +373,8 @@
                     <div id="cattlePhotoGalleryEmpty" class="text-center text-muted py-4 d-none">
                         <i class="fas fa-camera fa-2x mb-2"></i>
                         <div>Este ganado aún no tiene fotos registradas.</div>
+                    </div>
+                </div>
                     </div>
                 </div>
             </div>

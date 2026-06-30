@@ -1,6 +1,14 @@
 var divLoading = document.getElementById('divLoading');
 let tableBreed;
 let breedSubmitting = false;
+let breedImageObjectUrl = null;
+
+const breedEditorIds = ['breed_description', 'breed_characteristics'];
+const breedFieldIds = {
+    description: 'breed_description',
+    characteristics: 'breed_characteristics',
+    image: 'breed_image'
+};
 
 document.addEventListener('DOMContentLoaded', function () {
     $.ajaxSetup({
@@ -9,6 +17,8 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
+    initBreedRichEditors();
+
     tableBreed = $('#tableBreed').DataTable({
         processing: true,
         serverSide: true,
@@ -16,6 +26,7 @@ document.addEventListener('DOMContentLoaded', function () {
         columns: [
             { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false },
             { data: 'id', name: 'id' },
+            { data: 'image', name: 'image', orderable: false, searchable: false },
             { data: 'code', name: 'code' },
             { data: 'name', name: 'name', render: $.fn.dataTable.render.text() },
             { data: 'origin_country', name: 'origin_country', defaultContent: '—', render: $.fn.dataTable.render.text() },
@@ -63,6 +74,17 @@ document.addEventListener('DOMContentLoaded', function () {
         updateBreedCodePreview();
     });
 
+    $('#breed_image').on('change', function () {
+        const file = this.files?.[0];
+
+        if (!file) {
+            setBreedImagePreview(null);
+            return;
+        }
+
+        setBreedImagePreview(URL.createObjectURL(file));
+    });
+
     $('#breedForm').on('submit', function (event) {
         event.preventDefault();
 
@@ -74,6 +96,7 @@ document.addEventListener('DOMContentLoaded', function () {
         clearValidation();
         setSaveButtonLoading(true);
         showLoading();
+        syncBreedRichEditors();
 
         const $form = $(this);
         const breedId = $form.attr('data-id');
@@ -187,7 +210,98 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     $('#breedModal').on('hidden.bs.modal', resetBreedForm);
+
+    $(document).on('focusin', function (event) {
+        if ($(event.target).closest('.tox-tinymce-aux, .moxman-window, .tam-assetmanager-root').length) {
+            event.stopImmediatePropagation();
+        }
+    });
 });
+
+function initBreedRichEditors() {
+    if (!window.tinymce) {
+        return;
+    }
+
+    initTinyMceIfNeeded('#breed_description', {
+        height: 180,
+        placeholder: 'Origen, proposito productivo o descripcion general...',
+        toolbar: 'undo redo | styleselect fontsizeselect | bold italic underline removeformat | bullist numlist | alignleft aligncenter alignright alignjustify | link | fullscreen'
+    });
+
+    initTinyMceIfNeeded('#breed_characteristics', {
+        height: 220,
+        placeholder: 'Caracteristicas fisicas, productivas o reproductivas...',
+        toolbar: 'undo redo | styleselect fontsizeselect | bold italic underline strikethrough removeformat | forecolor backcolor | bullist numlist outdent indent | alignleft aligncenter alignright alignjustify | link | code fullscreen'
+    });
+}
+
+function initTinyMceIfNeeded(selector, options = {}) {
+    const id = selector.replace('#', '');
+
+    if (tinymce.get(id)) {
+        return;
+    }
+
+    tinymce.init({
+        selector,
+        menubar: false,
+        branding: false,
+        plugins: 'advlist autolink lists link charmap preview anchor searchreplace visualblocks code fullscreen insertdatetime table wordcount',
+        font_size_formats: '12px 14px 16px 18px 20px 24px 28px 32px 36px',
+        content_style: 'body { font-family: Arial, sans-serif; font-size: 14px; line-height: 1.7; }',
+        setup: function (editor) {
+            editor.on('change keyup undo redo', function () {
+                editor.save();
+            });
+        },
+        ...options
+    });
+}
+
+function syncBreedRichEditors() {
+    breedEditorIds.forEach(function (id) {
+        const editor = tinymce.get(id);
+
+        if (editor) {
+            $(`#${id}`).val(editor.getContent());
+        }
+    });
+}
+
+function setBreedEditorContent(id, content) {
+    const editor = tinymce.get(id);
+
+    if (editor) {
+        editor.setContent(content || '');
+    } else {
+        $(`#${id}`).val(content || '');
+    }
+}
+
+function setBreedImagePreview(imageUrl) {
+    if (breedImageObjectUrl) {
+        URL.revokeObjectURL(breedImageObjectUrl);
+        breedImageObjectUrl = null;
+    }
+
+    if (imageUrl?.startsWith('blob:')) {
+        breedImageObjectUrl = imageUrl;
+    }
+
+    const $preview = $('#breedImagePreview');
+
+    if (!$preview.length) {
+        return;
+    }
+
+    if (imageUrl) {
+        $preview.html(`<img src="${escapeHtml(imageUrl)}" alt="Vista previa de la raza">`);
+        return;
+    }
+
+    $preview.html('<i class="fas fa-cow"></i><span>Sin imagen</span>');
+}
 
 function prepareEditForm(breed) {
     resetBreedForm();
@@ -198,10 +312,14 @@ function prepareEditForm(breed) {
     $('#saveBreedButton span').text('Actualizar Raza');
 
     [
-        'name', 'code', 'origin_country', 'description', 'characteristics', 'status'
+        'name', 'code', 'origin_country', 'status'
     ].forEach(function (field) {
         $(`#${field}`).val(breed[field] ?? '');
     });
+
+    setBreedEditorContent('breed_description', breed.description || '');
+    setBreedEditorContent('breed_characteristics', breed.characteristics || '');
+    setBreedImagePreview(breed.image_url || null);
 }
 
 function fillDetailModal(breed) {
@@ -210,15 +328,30 @@ function fillDetailModal(breed) {
     $('#detailCode').text(valueOrDash(breed.code));
     $('#detailOriginCountry').text(valueOrDash(breed.origin_country));
     $('#detailStatusText').text(valueOrDash(breed.status_label));
-    $('#detailDescription').text(valueOrDash(breed.description));
-    $('#detailCharacteristics').text(valueOrDash(breed.characteristics));
+    $('#detailDescription').html(htmlOrDash(breed.description));
+    $('#detailCharacteristics').html(htmlOrDash(breed.characteristics));
     $('#detailCreatedAt').text(valueOrDash(breed.created_at_formatted));
     $('#detailUpdatedAt').text(valueOrDash(breed.updated_at_formatted));
+    setDetailImage(breed.image_url || null);
     $('#detailStatus').html(
         breed.status === 'active'
             ? '<span class="badge badge-success px-3 py-2">Activo</span>'
             : '<span class="badge badge-danger px-3 py-2">Inactivo</span>'
     );
+}
+
+function setDetailImage(imageUrl) {
+    const $image = $('#detailBreedImage');
+    const $placeholder = $('#detailBreedImagePlaceholder');
+
+    if (imageUrl) {
+        $image.attr('src', imageUrl).removeClass('d-none');
+        $placeholder.addClass('d-none');
+        return;
+    }
+
+    $image.attr('src', '').addClass('d-none');
+    $placeholder.removeClass('d-none');
 }
 
 function resetBreedForm() {
@@ -233,6 +366,10 @@ function resetBreedForm() {
     $('#status').val('active');
     $('#breedModalLabel').text('Nueva Raza');
     $('#saveBreedButton span').text('Guardar Raza');
+    setBreedEditorContent('breed_description', '');
+    setBreedEditorContent('breed_characteristics', '');
+    $('#breed_image').val('');
+    setBreedImagePreview(null);
     clearValidation();
 }
 
@@ -272,6 +409,7 @@ function normalizeBreedName(name) {
 function clearValidation() {
     $('#breed-error-messages').addClass('d-none').empty();
     $('#breedForm .is-invalid').removeClass('is-invalid');
+    $('#breedForm .tox-tinymce.is-invalid').removeClass('is-invalid');
     $('#breedForm .invalid-feedback').text('');
 }
 
@@ -279,8 +417,11 @@ function showValidationErrors(errors) {
     const messages = [];
 
     Object.entries(errors).forEach(function ([field, fieldMessages]) {
+        const inputId = breedFieldIds[field] || field;
+
         messages.push(fieldMessages[0]);
-        $(`#${field}`).addClass('is-invalid');
+        $(`#${inputId}`).addClass('is-invalid');
+        $(`#${inputId}`).siblings('.tox-tinymce').addClass('is-invalid');
         $(`#${field}-error`).text(fieldMessages[0]);
     });
 
@@ -324,6 +465,10 @@ function showToast(message) {
 
 function valueOrDash(value) {
     return value || '—';
+}
+
+function htmlOrDash(value) {
+    return value || '&mdash;';
 }
 
 function escapeHtml(value) {

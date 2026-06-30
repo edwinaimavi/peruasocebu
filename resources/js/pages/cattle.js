@@ -4,6 +4,7 @@ let cattleSubmitting = false;
 let cattlePhotoObjectUrl = null;
 let currentCattlePhotoUrl = null;
 let galleryPhotoObjectUrls = [];
+let selectedGalleryFiles = [];
 let currentDetailCattleId = null;
 
 document.addEventListener('DOMContentLoaded', function () {
@@ -82,6 +83,7 @@ document.addEventListener('DOMContentLoaded', function () {
     $(document).on('click', '.editCattlePhoto', editCattlePhoto);
     $(document).on('click', '.deleteCattlePhoto', deleteCattlePhoto);
     $(document).on('click', '.setMainCattlePhoto', setMainCattlePhoto);
+    $(document).on('click', '.gallery-remove-btn', removeSelectedGalleryPhoto);
 
     $('#cattleForm').on('submit', function (event) {
         event.preventDefault();
@@ -217,6 +219,18 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     $('#cattleModal').on('hidden.bs.modal', resetCattleForm);
+
+    $('#cattleDetailModal').on('shown.bs.modal', function () {
+        redrawPedigreeTrees(150);
+    });
+
+    $('a[data-toggle="tab"]').on('shown.bs.tab', function () {
+        redrawPedigreeTrees(100);
+    });
+
+    window.addEventListener('resize', function () {
+        redrawPedigreeTrees();
+    });
 });
 
 function prepareEditForm(cattle) {
@@ -301,50 +315,86 @@ function prepareGalleryPhotoPicker() {
 }
 
 function appendGalleryPhotos(formData) {
-    const galleryInput = document.getElementById('gallery_photos');
-
     formData.delete('gallery_photos');
     formData.delete('gallery_photos[]');
 
-    if (!galleryInput || !galleryInput.files) {
-        return;
-    }
-
-    Array.from(galleryInput.files).forEach(function (file) {
+    selectedGalleryFiles.forEach(function (file) {
         formData.append('gallery_photos[]', file);
     });
 }
 
 function handleGalleryPhotoChange() {
-    clearGalleryPhotoPreview();
-
     const files = Array.from(this.files || []);
 
-    if (files.length > 0) {
-        $('#galleryPhotoPreview').append(`
-            <div class="cattle-gallery-selection-summary">
-                ${files.length} foto${files.length === 1 ? '' : 's'} seleccionada${files.length === 1 ? '' : 's'}
-            </div>
-        `);
+    if (!files.length) {
+        return;
     }
 
-    files.forEach(function (file) {
+    selectedGalleryFiles = selectedGalleryFiles.concat(files);
+    this.value = '';
+    updateGalleryInputFiles();
+    renderGalleryPreview();
+    $('#gallery_photos-error').text('');
+}
+
+function updateGalleryInputFiles() {
+    const galleryInput = document.getElementById('gallery_photos');
+
+    if (!galleryInput || typeof DataTransfer === 'undefined') {
+        return;
+    }
+
+    const dataTransfer = new DataTransfer();
+
+    selectedGalleryFiles.forEach(function (file) {
+        dataTransfer.items.add(file);
+    });
+
+    galleryInput.files = dataTransfer.files;
+}
+
+function renderGalleryPreview() {
+    clearGalleryPhotoPreview();
+
+    if (!selectedGalleryFiles.length) {
+        return;
+    }
+
+    $('#galleryPhotoPreview').append(`
+        <div class="cattle-gallery-selection-summary">
+            ${selectedGalleryFiles.length} foto${selectedGalleryFiles.length === 1 ? '' : 's'} seleccionada${selectedGalleryFiles.length === 1 ? '' : 's'}
+        </div>
+    `);
+
+    selectedGalleryFiles.forEach(function (file, index) {
         const objectUrl = URL.createObjectURL(file);
         galleryPhotoObjectUrls.push(objectUrl);
         $('#galleryPhotoPreview').append(`
-            <div class="cattle-gallery-preview-item">
+            <div class="cattle-gallery-preview-item cattle-gallery-new-item">
+                <button type="button" class="gallery-remove-btn" data-index="${index}" aria-label="Quitar foto">
+                    <i class="fas fa-times"></i>
+                </button>
                 <img src="${objectUrl}" alt="${escapeHtml(file.name)}">
-                <div class="cattle-gallery-item-body small text-muted">${escapeHtml(file.name)}</div>
+                <div class="cattle-gallery-item-body small text-muted cattle-gallery-preview-name">${escapeHtml(file.name)}</div>
             </div>
         `);
     });
+}
 
-    if (files.length > 0) {
-        $('#gallery_photos-error').text('');
+function removeSelectedGalleryPhoto() {
+    const index = Number($(this).data('index'));
+
+    if (!Number.isInteger(index) || index < 0 || index >= selectedGalleryFiles.length) {
+        return;
     }
+
+    selectedGalleryFiles.splice(index, 1);
+    updateGalleryInputFiles();
+    renderGalleryPreview();
 }
 
 function renderExistingGallery(photos) {
+    resetSelectedGalleryFiles(false);
     clearGalleryPhotoPreview();
 
     (photos || []).forEach(function (photo) {
@@ -366,6 +416,22 @@ function clearGalleryPhotoPreview() {
     });
     galleryPhotoObjectUrls = [];
     $('#galleryPhotoPreview').empty();
+}
+
+function resetSelectedGalleryFiles(renderPreview = true) {
+    const galleryInput = document.getElementById('gallery_photos');
+
+    selectedGalleryFiles = [];
+
+    if (galleryInput) {
+        galleryInput.value = '';
+    }
+
+    updateGalleryInputFiles();
+
+    if (renderPreview) {
+        renderGalleryPreview();
+    }
 }
 
 function updateCattleCodePreview() {
@@ -442,6 +508,7 @@ function breedCodePrefix(breed) {
 
 function fillDetailModal(cattle) {
     currentDetailCattleId = cattle.id;
+    $('#cattleDetailTabs a[href="#cattleSummaryTab"]').tab('show');
     $('#detailCattleSubtitle').text(`Registro #${cattle.id}`);
     $('#detailName').text(valueOrDash(cattle.name));
     $('#detailCode').text(valueOrDash(cattle.code));
@@ -463,6 +530,7 @@ function fillDetailModal(cattle) {
     $('#detailFatherBreed').text(cattle.father_breed_name ? `Raza: ${cattle.father_breed_name}` : 'No registrado');
     $('#detailMother').text(valueOrDash(cattle.mother_label || 'No registrado'));
     $('#detailMotherBreed').text(cattle.mother_breed_name ? `Raza: ${cattle.mother_breed_name}` : 'No registrado');
+    renderGenealogyTree(cattle, cattle.genealogy_tree || []);
     setGenealogyShortcutLinks(cattle);
     setOwnershipHistoryShortcutLink(cattle);
     setCattleSaleShortcutLink(cattle);
@@ -491,6 +559,267 @@ function fillDetailModal(cattle) {
     $('#detailPublicBadge').html(cattle.is_public
         ? '<span class="badge badge-success px-3 py-2">Público</span>'
         : '<span class="badge badge-secondary px-3 py-2">Privado</span>');
+}
+
+function renderGenealogyTree(cattle, genealogyTree) {
+    const $container = $('#cattleGenealogyTree');
+    const map = buildGenealogyMap(genealogyTree);
+    const father = map.F || null;
+    const mother = map.M || null;
+    const paternalGrandfather = map.FF || null;
+    const paternalGrandmother = map.FM || null;
+    const maternalGrandfather = map.MF || null;
+    const maternalGrandmother = map.MM || null;
+    const extendedLineage = Object.values(map)
+        .filter(function (item) {
+            return item.path && item.path.length > 2;
+        })
+        .sort(function (a, b) {
+            return String(a.path || '').localeCompare(String(b.path || ''));
+        });
+    const hasAny = father || mother || paternalGrandfather || paternalGrandmother
+        || maternalGrandfather || maternalGrandmother || extendedLineage.length;
+
+    $container.empty();
+
+    if (!hasAny) {
+        $container.html(`
+            <div class="genealogy-empty">
+                <i class="fas fa-sitemap"></i>
+                <strong>Sin genealogía registrada</strong>
+                <p>Este animal todavía no tiene familiares registrados.</p>
+            </div>
+        `);
+        return;
+    }
+
+    $container.html(`
+        <div class="pedigree-tree js-pedigree-tree">
+            <svg class="pedigree-lines" aria-hidden="true"></svg>
+            <div class="pedigree-branches">
+                <div class="pedigree-branch paternal-branch">
+                    <div class="pedigree-branch-title">Línea paterna</div>
+                    <div class="pedigree-ancestor-row">
+                        ${renderPedigreeNode(paternalGrandfather, 'FF', 'Abuelo paterno', true)}
+                        ${renderPedigreeNode(paternalGrandmother, 'FM', 'Abuela paterna', true)}
+                    </div>
+                    <div class="pedigree-line-down"></div>
+                    <div class="pedigree-parent-row">
+                        ${renderPedigreeNode(father, 'F', 'Padre', false)}
+                    </div>
+                </div>
+
+                <div class="pedigree-branch maternal-branch">
+                    <div class="pedigree-branch-title">Línea materna</div>
+                    <div class="pedigree-ancestor-row">
+                        ${renderPedigreeNode(maternalGrandfather, 'MF', 'Abuelo materno', true)}
+                        ${renderPedigreeNode(maternalGrandmother, 'MM', 'Abuela materna', true)}
+                    </div>
+                    <div class="pedigree-line-down"></div>
+                    <div class="pedigree-parent-row">
+                        ${renderPedigreeNode(mother, 'M', 'Madre', false)}
+                    </div>
+                </div>
+            </div>
+
+            <div class="pedigree-join-line"></div>
+            <div class="pedigree-current-row">
+                ${renderCurrentAnimalNode(cattle)}
+            </div>
+            ${renderExtendedLineage(extendedLineage)}
+        </div>
+    `);
+
+    bindPedigreeImageLoad($container[0]);
+    redrawPedigreeTrees(100);
+}
+
+function buildGenealogyMap(genealogyTree) {
+    const map = {};
+
+    (genealogyTree || []).forEach(function (item) {
+        if (item.path) {
+            map[item.path] = item;
+        }
+    });
+
+    return map;
+}
+
+function renderPedigreeNode(item, path, fallbackLabel, compact = false) {
+    const pathSuffix = path ? ` - ${escapeHtml(path)}` : '';
+
+    if (!item) {
+        return `
+            <div class="pedigree-node pedigree-node-empty ${compact ? 'compact' : ''}" data-path="${escapeHtml(path)}">
+                <div class="pedigree-node-avatar">
+                    <i class="fas fa-plus"></i>
+                </div>
+                <small>${escapeHtml(fallbackLabel)}${pathSuffix}</small>
+                <strong>No registrado</strong>
+            </div>
+        `;
+    }
+
+    const displayName = `${item.code ? `${item.code} - ` : ''}${item.name || 'No registrado'}`;
+    const breed = item.breed || 'No registrada';
+    const labelPath = item.path || path;
+    const labelSuffix = labelPath ? ` - ${escapeHtml(labelPath)}` : '';
+
+    return `
+        <div class="pedigree-node ${compact ? 'compact' : ''}" data-path="${escapeHtml(labelPath)}">
+            <div class="pedigree-node-avatar">
+                ${item.photo_url
+                    ? `<img src="${escapeHtml(item.photo_url)}" alt="${escapeHtml(item.name || 'Familiar')}">`
+                    : '<i class="fas fa-paw"></i>'}
+            </div>
+            <div class="pedigree-node-info">
+                <small>${escapeHtml(item.label || fallbackLabel)}${labelSuffix}</small>
+                <strong>${escapeHtml(displayName)}</strong>
+                <span>Raza: ${escapeHtml(breed)}</span>
+            </div>
+        </div>
+    `;
+}
+
+function renderCurrentAnimalNode(cattle) {
+    return renderPedigreeNode({
+        label: 'Animal principal',
+        code: cattle.code || '',
+        name: cattle.name || '',
+        breed: cattle.breed_name || '',
+        photo_url: cattle.photo_url || ''
+    }, 'CURRENT', 'Animal principal', false).replace('pedigree-node ', 'pedigree-node current-animal ');
+}
+
+function renderExtendedLineage(items) {
+    if (!items.length) {
+        return '';
+    }
+
+    return `
+        <div class="pedigree-extended">
+            <div class="pedigree-extended-title">Linaje extendido</div>
+            <div class="pedigree-extended-grid">
+                ${items.map(function (item) {
+                    return renderPedigreeNode(item, item.path, item.label || 'Familiar', true);
+                }).join('')}
+            </div>
+        </div>
+    `;
+}
+
+function redrawPedigreeTrees(delay = 0) {
+    const draw = function () {
+        document.querySelectorAll('.js-pedigree-tree').forEach(function (tree) {
+            drawPedigreeLines(tree);
+        });
+    };
+
+    if (delay) {
+        window.setTimeout(draw, delay);
+        return;
+    }
+
+    draw();
+}
+
+function bindPedigreeImageLoad(root) {
+    if (!root) {
+        return;
+    }
+
+    root.querySelectorAll('.js-pedigree-tree img').forEach(function (img) {
+        img.addEventListener('load', function () {
+            const tree = img.closest('.js-pedigree-tree');
+
+            if (tree) {
+                drawPedigreeLines(tree);
+            }
+        }, { once: true });
+    });
+}
+
+function drawPedigreeLines(treeElement) {
+    const tree = typeof jQuery !== 'undefined' && treeElement instanceof jQuery ? treeElement[0] : treeElement;
+
+    if (!tree) {
+        return;
+    }
+
+    const svg = tree.querySelector('.pedigree-lines');
+
+    if (!svg) {
+        return;
+    }
+
+    svg.innerHTML = '';
+
+    const width = Math.max(tree.scrollWidth, tree.clientWidth);
+    const height = Math.max(tree.scrollHeight, tree.clientHeight);
+
+    if (!width || !height) {
+        return;
+    }
+
+    const treeRect = tree.getBoundingClientRect();
+
+    svg.setAttribute('width', width);
+    svg.setAttribute('height', height);
+    svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+
+    function getNode(path) {
+        return tree.querySelector(`[data-path="${path}"]`);
+    }
+
+    function getPoint(node, position) {
+        if (!node) {
+            return null;
+        }
+
+        const rect = node.getBoundingClientRect();
+        const x = rect.left - treeRect.left + tree.scrollLeft + (rect.width / 2);
+        const y = position === 'top'
+            ? rect.top - treeRect.top + tree.scrollTop
+            : rect.bottom - treeRect.top + tree.scrollTop;
+
+        return { x, y };
+    }
+
+    function isEmptyNode(node) {
+        return node.classList.contains('is-empty') || node.classList.contains('pedigree-node-empty');
+    }
+
+    function connect(fromPath, toPath, cssClass = '') {
+        const fromNode = getNode(fromPath);
+        const toNode = getNode(toPath);
+
+        if (!fromNode || !toNode || isEmptyNode(fromNode) || isEmptyNode(toNode)) {
+            return;
+        }
+
+        const start = getPoint(fromNode, 'bottom');
+        const end = getPoint(toNode, 'top');
+
+        if (!start || !end) {
+            return;
+        }
+
+        const midY = start.y + Math.max(20, (end.y - start.y) / 2);
+        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+
+        path.setAttribute('d', `M ${start.x} ${start.y} C ${start.x} ${midY}, ${end.x} ${midY}, ${end.x} ${end.y}`);
+        path.setAttribute('class', `pedigree-line-path ${cssClass}`.trim());
+
+        svg.appendChild(path);
+    }
+
+    connect('FF', 'F');
+    connect('FM', 'F');
+    connect('MF', 'M');
+    connect('MM', 'M');
+    connect('F', 'CURRENT', 'strong');
+    connect('M', 'CURRENT', 'strong');
 }
 
 function renderCattlePhotoGallery(photos) {
@@ -1177,7 +1506,7 @@ function resetCattleForm() {
     currentCattlePhotoUrl = null;
     clearValidation();
     setCattlePhotoPreview(null);
-    clearGalleryPhotoPreview();
+    resetSelectedGalleryFiles();
 }
 
 function clearValidation() {
