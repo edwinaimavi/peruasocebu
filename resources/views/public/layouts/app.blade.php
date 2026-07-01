@@ -9,6 +9,7 @@
     <title>@yield('title', 'PERU ASOCEBU')</title>
 
     <link rel="icon" href="{{ asset('favicon.ico') }}" sizes="any">
+    <link rel="stylesheet" href="{{ asset('vendor/fontawesome-free/css/all.min.css') }}">
     @vite('resources/css/public-home.css')
     @stack('styles')
 </head>

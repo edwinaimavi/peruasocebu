@@ -2,6 +2,7 @@
 <script>
     const navToggle = document.querySelector('.nav-toggle');
     const mainNav = document.querySelector('.main-nav');
+    const siteHeader = document.querySelector('.site-header');
     const publicContactForm = document.getElementById('publicContactForm');
     const heroSearchForm = document.querySelector('.hero-search-form');
     const typeSelect = heroSearchForm?.querySelector('[name="type"]');
@@ -40,6 +41,30 @@
             mainNav?.classList.remove('is-open');
         });
     });
+
+    function updateHeaderState() {
+        siteHeader?.classList.toggle('is-scrolled', window.scrollY > 18);
+    }
+
+    updateHeaderState();
+    window.addEventListener('scroll', updateHeaderState, { passive: true });
+
+    const revealItems = document.querySelectorAll('.js-reveal');
+
+    if ('IntersectionObserver' in window) {
+        const revealObserver = new IntersectionObserver((entries) => {
+            entries.forEach((entry) => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('is-visible');
+                    revealObserver.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.16 });
+
+        revealItems.forEach((item) => revealObserver.observe(item));
+    } else {
+        revealItems.forEach((item) => item.classList.add('is-visible'));
+    }
 
     const breedTrack = document.getElementById('breedSliderTrack');
     const breedSlides = Array.from(document.querySelectorAll('[data-breed-slide]'));

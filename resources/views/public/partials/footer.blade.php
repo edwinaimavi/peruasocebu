@@ -7,18 +7,18 @@
                 </span>
                 <span><strong>PERU ASOCEBU</strong><small>Portal ganadero</small></span>
             </a>
-            <p>Registro, trazabilidad y certificacion para una ganaderia bovina moderna y confiable.</p>
+            <p>Registro, trazabilidad y certificacion para una ganaderia bovina moderna, verificable y confiable.</p>
         </div>
         <div class="footer-links">
             <strong>Asociacion</strong>
             <a href="{{ url('/#nosotros') }}">Quienes somos</a>
-            <a href="{{ url('/#servicios') }}">Criaderos</a>
-            <a href="{{ url('/#servicios') }}">Propietarios</a>
+            <a href="{{ url('/#razas') }}">Razas registradas</a>
+            <a href="{{ url('/#registros') }}">Registros publicos</a>
             <a href="{{ url('/#contacto') }}">Contacto</a>
         </div>
         <div class="footer-links">
             <strong>Servicios</strong>
-            <a href="{{ url('/#registros') }}">Registros</a>
+            <a href="{{ url('/#servicios') }}">Servicios</a>
             <a href="{{ url('/#registros') }}">Genealogia</a>
             <a href="{{ url('/#registros') }}">Certificados</a>
             <a href="{{ url('/#servicios') }}">Sanidad animal</a>
@@ -37,7 +37,7 @@
         </div>
     </div>
     <div class="container footer-bottom">
-        <span>© {{ date('Y') }} PERU ASOCEBU. Todos los derechos reservados.</span>
+        <span>&copy; {{ date('Y') }} PERU ASOCEBU. Todos los derechos reservados.</span>
         <span>Desarrollando el futuro de la ganaderia peruana.</span>
     </div>
 </footer>
